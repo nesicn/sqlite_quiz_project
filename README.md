@@ -3,7 +3,7 @@
 **Ders:** Veri Tabanı Sistemleri  
 **Veri Tabanı Motoru:** SQLite3  
 
-🌐 **Canlı Web Arayüzü (Streamlit):** `https://db-quiz-project.streamlit.app/`  
+🌐 **Canlı Web Arayüzü (Streamlit):** https://db-quiz-project.streamlit.app/
 
 ---
 
