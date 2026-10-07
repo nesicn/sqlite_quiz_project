@@ -473,6 +473,9 @@ def create_guest_participation(
         )
         participation_id = int(cursor.lastrowid)
     return user_id, participation_id, str(session["baslik"])
+    # The caller needs the session ID to load the attempt; the participation
+    # ID is retrieved from the database when answers are saved.
+    return user_id, int(session["oturum_id"]), str(session["baslik"])
 
 
 def get_student_attempt(
@@ -529,6 +532,22 @@ def get_student_attempt(
     result["questions"] = [dict(question) for question in questions]
     result["options"] = options
     return result
+
+
+def get_session_id_for_participation(
+    user_id: int, participation_id: int
+) -> int | None:
+    """Recover sessions created by the earlier code that stored the wrong ID."""
+    with db_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT oturum_id
+            FROM katilimlar
+            WHERE katilim_id = ? AND kullanici_id = ?;
+            """,
+            (participation_id, user_id),
+        ).fetchone()
+    return int(row["oturum_id"]) if row else None
 
 
 def finish_participation(participation_id: int) -> None:
@@ -1214,9 +1233,26 @@ def render_student_attempt() -> None:
     session_id = int(st.session_state.student_session_id)
     attempt = get_student_attempt(user_id, session_id)
     if not attempt:
+        # Older builds saved katilim_id in this state slot instead of oturum_id.
+        try:
+            recovered_session_id = get_session_id_for_participation(
+                user_id, session_id
+            )
+        except sqlite3.Error:
+            recovered_session_id = None
+        if recovered_session_id is not None:
+            session_id = recovered_session_id
+            st.session_state.student_session_id = session_id
+            attempt = get_student_attempt(user_id, session_id)
+    if not attempt:
+        st.warning("Katılım bilgisi bulunamadı. Giriş ekranına dönüp tekrar katılın.")
         st.error("Katılım kaydı bulunamadı.")
         st.session_state.pop("student_user_id", None)
         st.session_state.pop("student_session_id", None)
+        if st.button("Giriş ekranına dön", key="reset_missing_student_attempt"):
+            st.session_state.pop("student_user_id", None)
+            st.session_state.pop("student_session_id", None)
+            st.rerun()
         return
 
     st.markdown(
