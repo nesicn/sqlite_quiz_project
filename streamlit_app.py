@@ -1,6 +1,6 @@
 """
 Quiz Sistemi Veritabanı Yönetimi ve Kullanıcı Arayüzü
-Kurumsal ve Minimalist Streamlit Uygulaması (Hoca ve Öğrenci Modları)
+Kurumsal Yönetim ve Sınav Takip Paneli (Executive Dark Theme - Sıfır Emoji)
 """
 
 import os
@@ -10,7 +10,7 @@ import streamlit as st
 
 # Sayfa Yapılandırması (Sıfır Emoji)
 st.set_page_config(
-    page_title="Quiz Sistemi Veri Tabanı Yönetimi",
+    page_title="Quiz Sistemi Veri Tabanı Yönetim Paneli",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -18,217 +18,276 @@ st.set_page_config(
 DB_PATH = os.path.join(os.path.dirname(__file__), "quiz.db")
 
 # -----------------------------------------------------------------------------
-# ÖZEL KURUMSAL VE MİNİMALİST CSS (MONOKROM PALET)
+# ÖZEL KURUMSAL VE MODERN CSS (EXECUTIVE SLATE PALETİ - SIFIR EMOJİ)
+# Renk Paleti:
+# - Arka Plan: #0B1120 (Slate 950 / Gece Mavisi)
+# - Kartlar ve Paneller: #131D31 (Slate 900)
+# - Çerçeveler: rgba(148, 163, 184, 0.18)
+# - Vurgu ve Butonlar: Gradient (#2563EB -> #4F46E5)
+# - Metinler: #F8FAFC (Başlıklar), #CBD5E1 (Gövde), #94A3B8 (Etiketler)
 # -----------------------------------------------------------------------------
 CUSTOM_CSS = """
 <style>
 /* Global Sayfa Arka Planı ve Tipografi */
 html, body, [class*="css"] {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #1E293B;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #CBD5E1;
 }
 
 .stApp {
-    background-color: #F8F9FA;
+    background-color: #0B1120;
+    color: #CBD5E1;
 }
 
 /* Başlıklar */
 h1, h2, h3, h4, h5, h6 {
-    color: #0F172A;
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    color: #F8FAFC !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em;
 }
 
 .block-container {
-    padding-top: 1.5rem;
-    padding-bottom: 3rem;
-    max-width: 1160px;
+    padding-top: 1.75rem;
+    padding-bottom: 3.5rem;
+    max-width: 1200px;
 }
 
-/* Üst Başlık Şeridi */
-.app-header {
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid #E2E8F0;
+/* Üst Başlık Banner */
+.hero-banner {
+    background: linear-gradient(135deg, #131D31 0%, #1A263D 100%);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
 }
 
-.app-title {
-    font-size: 20px;
+.hero-title {
+    font-size: 21px;
     font-weight: 700;
-    color: #0F172A;
+    color: #F8FAFC;
     margin: 0;
-    padding: 0;
 }
 
-.app-subtitle {
+.hero-subtitle {
     font-size: 13px;
-    color: #64748B;
+    color: #94A3B8;
     margin-top: 4px;
     margin-bottom: 0;
 }
 
-/* Sekmeler (Tabs) */
+/* SEKME (TAB) GÖRÜNÜMÜ - HER DURUMDA NET, BELİRGİN VE OKUNABİLİR */
 .stTabs [data-baseweb="tab-list"] {
     gap: 8px;
-    border-bottom: 1px solid #E2E8F0;
-    padding-bottom: 2px;
+    background-color: #131D31;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    margin-bottom: 20px;
 }
 
 .stTabs [data-baseweb="tab"] {
-    height: 40px;
-    padding: 6px 16px;
-    background-color: transparent;
-    color: #64748B;
-    font-weight: 500;
-    font-size: 13px;
-    border: none;
-    border-radius: 4px 4px 0 0;
+    height: 42px;
+    padding: 8px 18px;
+    background-color: transparent !important;
+    border-radius: 6px;
+    border: none !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.stTabs [data-baseweb="tab"] p,
+.stTabs [data-baseweb="tab"] span,
+.stTabs [data-baseweb="tab"] div {
+    color: #94A3B8 !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover p,
+.stTabs [data-baseweb="tab"]:hover span,
+.stTabs [data-baseweb="tab"]:hover div {
+    color: #F8FAFC !important;
 }
 
 .stTabs [aria-selected="true"] {
-    color: #2563EB !important;
-    border-bottom: 2px solid #2563EB !important;
+    background: linear-gradient(135deg, #1E293B 0%, #2563EB 100%) !important;
+    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35) !important;
+}
+
+.stTabs [aria-selected="true"] p,
+.stTabs [aria-selected="true"] span,
+.stTabs [aria-selected="true"] div {
+    color: #FFFFFF !important;
     font-weight: 600 !important;
-    background-color: transparent !important;
 }
 
-/* Kurumsal Butonlar */
-.stButton > button {
-    background-color: #2563EB;
-    color: #FFFFFF;
-    border: 1px solid #1D4ED8;
-    border-radius: 5px;
-    padding: 0.45rem 1rem;
-    font-weight: 500;
-    font-size: 13px;
-    box-shadow: none;
-    transition: background-color 0.15s ease-in-out;
+/* Kartlar ve Konteynerler */
+.dashboard-card {
+    background: #131D31;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.3);
 }
 
-.stButton > button:hover {
-    background-color: #1D4ED8;
-    border-color: #1E40AF;
-    color: #FFFFFF;
-}
-
-.stButton > button:active {
-    background-color: #1E40AF;
-}
-
-/* Kart Yapıları */
-.card {
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 6px;
-    padding: 16px 20px;
+.card-heading {
+    font-size: 15px;
+    font-weight: 600;
+    color: #F8FAFC;
     margin-bottom: 14px;
 }
 
-.card-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #0F172A;
-    margin-bottom: 10px;
-}
-
 /* İstatistik Metrik Kutuları */
-.metric-container {
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
+.stat-box {
+    background: linear-gradient(145deg, #131D31 0%, #1A263D 100%);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.metric-label {
+.stat-box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2563EB, #38BDF8);
+}
+
+.stat-label {
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748B;
+    letter-spacing: 0.08em;
+    color: #94A3B8;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 6px;
 }
 
-.metric-val {
-    font-size: 20px;
+.stat-value {
+    font-size: 24px;
     font-weight: 700;
-    color: #0F172A;
+    color: #F8FAFC;
+}
+
+/* Buton Tasarımı */
+.stButton > button {
+    background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 1.25rem !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(135deg, #1D4ED8 0%, #4338CA 100%) !important;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.55) !important;
+    transform: translateY(-1px);
+}
+
+.stButton > button:active {
+    transform: translateY(0);
 }
 
 /* Soft Bildirim Kutuları */
-.alert-box {
-    padding: 12px 16px;
-    border-radius: 5px;
-    font-size: 13px;
+.glow-alert {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
     line-height: 1.5;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 12px;
+    margin-bottom: 12px;
 }
 
-.alert-success {
-    background-color: #F0FDF4;
-    border: 1px solid #BBF7D0;
-    color: #166534;
+.glow-success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34D399;
 }
 
-.alert-error {
-    background-color: #FEF2F2;
-    border: 1px solid #FECACA;
-    color: #991B1B;
+.glow-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #F87171;
 }
 
-.alert-info {
-    background-color: #F8FAFC;
-    border: 1px solid #E2E8F0;
-    color: #334155;
+.glow-info {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #7DD3FC;
 }
 
-/* Rozetler (Badges) */
-.badge {
+/* Rozetler */
+.tag-badge {
     display: inline-block;
-    padding: 2px 7px;
+    padding: 3px 9px;
     font-size: 11px;
-    font-weight: 500;
-    border-radius: 3px;
+    font-weight: 600;
+    border-radius: 4px;
     margin-right: 6px;
 }
 
-.badge-blue {
-    background-color: #EFF6FF;
-    color: #1D4ED8;
-    border: 1px solid #DBEAFE;
+.tag-blue {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
-.badge-gray {
-    background-color: #F1F5F9;
-    color: #475569;
-    border: 1px solid #E2E8F0;
+.tag-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.badge-green {
-    background-color: #F0FDF4;
-    color: #166534;
-    border: 1px solid #BBF7D0;
+.tag-red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.badge-red {
-    background-color: #FEF2F2;
-    color: #991B1B;
-    border: 1px solid #FECACA;
+.tag-gray {
+    background: rgba(148, 163, 184, 0.15);
+    color: #CBD5E1;
+    border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-/* Form Elemanları */
+/* Form Elemanları ve Kutuları */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea,
 .stSelectbox > div > div > div {
-    background-color: #FFFFFF;
-    border: 1px solid #CBD5E1;
-    border-radius: 5px;
-    font-size: 13px;
-    color: #1E293B;
+    background-color: #131D31 !important;
+    border: 1px solid rgba(148, 163, 184, 0.2) !important;
+    border-radius: 6px !important;
+    color: #F8FAFC !important;
+    font-size: 13px !important;
 }
 
-/* Üst Menü ve Altbilgi Gizleme */
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus,
+.stSelectbox > div > div > div:focus {
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 1px #2563EB !important;
+}
+
+.stRadio label {
+    color: #E2E8F0 !important;
+    font-size: 14px !important;
+}
+
+/* Streamlit Header / Footer Gizleme */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
@@ -239,7 +298,7 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# VERİ TABANI YÖNETİMİ
+# VERİ TABANI YÖNETİMİ & TABLO BAŞLATMA
 # -----------------------------------------------------------------------------
 def get_db_connection():
     """SQLite veritabanı bağlantısı açar ve FK kısıtlamalarını etkinleştirir."""
@@ -249,7 +308,7 @@ def get_db_connection():
 
 
 def init_database():
-    """Uygulama açılışında questions tablosunu oluşturur ve gerekirse veri aktarır."""
+    """Uygulama açılışında questions tablosunu otomatik oluşturur ve gerekirse veri aktarır."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -539,15 +598,15 @@ if "quiz_stats" not in st.session_state:
 
 
 # -----------------------------------------------------------------------------
-# ÜST BAŞLIK VE GÖRÜNÜM / ROL SEÇİCİSİ
+# ÜST BAŞLIK VE KULLANICI ROLÜ SEÇİCİSİ
 # -----------------------------------------------------------------------------
-col_header_title, col_header_role = st.columns([2.5, 1.5])
+col_header_title, col_header_role = st.columns([2.6, 1.4])
 
 with col_header_title:
     st.markdown("""
-    <div class="app-header">
-        <div class="app-title">Quiz Sistemi Veri Tabanı Yönetimi</div>
-        <div class="app-subtitle">İlişkisel Veri Katmanı, Öğrenci Takibi ve Test Paneli | SQLite3</div>
+    <div class="hero-banner">
+        <div class="hero-title">Quiz Sistemi Veri Tabanı Yönetim Paneli</div>
+        <div class="hero-subtitle">İlişkisel Veri Katmanı, Öğrenci Takibi ve Test Paneli | SQLite3</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -556,7 +615,7 @@ with col_header_role:
         "Kullanıcı Rolü / Görünüm Modu",
         ["Eğitmen / Hoca Paneli", "Öğrenci (Quiz Çözümü)"],
         index=0,
-        help="Hoca ekranı ile öğrenci sınav çözme ekranı arasında geçiş yapabilirsiniz."
+        help="Hoca yönetim paneli ile öğrenci test ekranı arasında geçiş yapabilirsiniz."
     )
 
 
@@ -565,10 +624,10 @@ with col_header_role:
 # =============================================================================
 if selected_view == "Eğitmen / Hoca Paneli":
     tab_students, tab_sessions, tab_analytics, tab_questions = st.tabs([
-        "Öğrenci ve Sınav Sonuçları",
-        "Oturum ve Canlı İlerleme",
+        "Öğrenci Sınav Sonuçları",
+        "Oturum Canlı Takibi",
         "Soru Analitiği",
-        "Soru Yönetimi ve Kısıtlar"
+        "Soru Bankası & Yönetim"
     ])
 
     # -------------------------------------------------------------------------
@@ -586,34 +645,35 @@ if selected_view == "Eğitmen / Hoca Paneli":
         m1, m2, m3, m4 = st.columns(4)
         with m1:
             st.markdown(f"""
-            <div class="metric-container">
-                <div class="metric-label">Toplam Sınav Katılımı</div>
-                <div class="metric-val">{total_enrollments}</div>
+            <div class="stat-box">
+                <div class="stat-label">Toplam Sınav Katılımı</div>
+                <div class="stat-value">{total_enrollments}</div>
             </div>
             """, unsafe_allow_html=True)
         with m2:
             st.markdown(f"""
-            <div class="metric-container">
-                <div class="metric-label">Başarılı (Geçti)</div>
-                <div class="metric-val" style="color: #166534;">{passed_count}</div>
+            <div class="stat-box">
+                <div class="stat-label">Başarılı Öğrenci</div>
+                <div class="stat-value" style="color: #34D399;">{passed_count}</div>
             </div>
             """, unsafe_allow_html=True)
         with m3:
             st.markdown(f"""
-            <div class="metric-container">
-                <div class="metric-label">Başarısız (Kaldı)</div>
-                <div class="metric-val" style="color: #991B1B;">{failed_count}</div>
+            <div class="stat-box">
+                <div class="stat-label">Başarısız Öğrenci</div>
+                <div class="stat-value" style="color: #F87171;">{failed_count}</div>
             </div>
             """, unsafe_allow_html=True)
         with m4:
             st.markdown(f"""
-            <div class="metric-container">
-                <div class="metric-label">Ortalama Puan</div>
-                <div class="metric-val">{avg_score:.1f}</div>
+            <div class="stat-box">
+                <div class="stat-label">Genel Ortalama Puan</div>
+                <div class="stat-value">{avg_score:.1f}</div>
             </div>
             """, unsafe_allow_html=True)
 
         # Filtreleme Alanı
+        st.markdown('<div class="dashboard-card"><div class="card-heading">Filtreleme ve Öğrenci Arama</div>', unsafe_allow_html=True)
         col_f_sess, col_f_status, col_f_search = st.columns([1.5, 1, 2])
         session_titles = ["Tüm Oturumlar"] + sorted(list({r["oturum_basligi"] for r in all_results}))
 
@@ -633,7 +693,7 @@ if selected_view == "Eğitmen / Hoca Paneli":
         if f_search.strip():
             filtered_results = [r for r in filtered_results if f_search.strip().lower() in r["ad_soyad"].lower() or f_search.strip().lower() in r["eposta"].lower()]
 
-        st.markdown(f"<div style='font-size: 13px; color: #64748B; margin-bottom: 8px;'>Listelenen Öğrenci Kaydı: <strong>{len(filtered_results)}</strong></div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size: 13px; color: #94A3B8; margin-top: 8px;'>Listelenen Öğrenci Kaydı: <strong style='color: #F8FAFC;'>{len(filtered_results)}</strong></div></div>", unsafe_allow_html=True)
 
         # Tablo Formatlama
         table_rows = []
@@ -643,19 +703,18 @@ if selected_view == "Eğitmen / Hoca Paneli":
                 "Ad Soyad": r["ad_soyad"],
                 "E-Posta": r["eposta"],
                 "Oturum": r["oturum_basligi"],
-                "Soru": r["toplam_soru"],
+                "Toplam Soru": r["toplam_soru"],
                 "Doğru": r["dogru_sayisi"],
                 "Yanlış": r["yanlis_sayisi"],
                 "Boş": r["bos_sayisi"],
                 "Net Puan": r["toplam_puan"],
-                "Durum": r["durum_sonucu"]
+                "Sonuç": r["durum_sonucu"]
             })
 
         st.dataframe(table_rows, use_container_width=True, hide_index=True)
 
         # Öğrenci Detay Karnesi (Transkript İnceleme)
-        st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 1.5rem 0 1rem 0;'>", unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Öğrenci Sınav Karnesi ve Cevap Detayları</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dashboard-card" style="margin-top: 24px;"><div class="card-heading">Öğrenci Sınav Karnesi ve Cevap Detayları</div>', unsafe_allow_html=True)
 
         if filtered_results:
             student_options = [f"ID {r['kullanici_id']} - {r['ad_soyad']} ({r['oturum_basligi'][:30]}...)" for r in filtered_results]
@@ -664,7 +723,6 @@ if selected_view == "Eğitmen / Hoca Paneli":
             selected_idx = student_options.index(selected_student_label)
             target_record = filtered_results[selected_idx]
 
-            # Öğrencinin o oturumdaki soru bazlı cevaplarını çek
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("""
@@ -709,42 +767,42 @@ if selected_view == "Eğitmen / Hoca Paneli":
                 })
 
             st.dataframe(detail_table, use_container_width=True, hide_index=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # HOCA PANELİ - 2. SEKME: OTURUM VE CANLI İLERLEME
     # -------------------------------------------------------------------------
     with tab_sessions:
-        st.markdown('<div class="card-title">Oturum İlerleme ve Canlı Takip Raporu</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card-heading">Oturum İlerleme ve Canlı Takip Raporu</div>', unsafe_allow_html=True)
         sessions_data = get_live_sessions_data()
 
         for s_row in sessions_data:
             durum_str = s_row["oturum_durumu"].upper()
-            badge_class = "badge-green" if durum_str == "TAMAMLANDI" else ("badge-blue" if durum_str == "DEVAM_EDIYOR" else "badge-gray")
+            tag_class = "tag-green" if durum_str == "TAMAMLANDI" else ("tag-blue" if durum_str == "DEVAM_EDIYOR" else "tag-gray")
 
             st.markdown(f"""
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="dashboard-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
-                        <span class="badge {badge_class}">Oturum {s_row['oturum_id']} | {durum_str}</span>
-                        <strong style="font-size: 15px; color: #0F172A;">{s_row['oturum_basligi']}</strong>
+                        <span class="tag-badge {tag_class}">Oturum {s_row['oturum_id']} | {durum_str}</span>
+                        <strong style="font-size: 15.5px; color: #F8FAFC;">{s_row['oturum_basligi']}</strong>
                     </div>
-                    <div style="font-size: 12px; color: #64748B;">
+                    <div style="font-size: 12px; color: #94A3B8;">
                         Süre: {s_row['sure_dakika']} dk | Baraj: {s_row['gecme_notu']} Puan
                     </div>
                 </div>
-                <div style="display: flex; gap: 24px; font-size: 13px; color: #475569; margin-bottom: 10px;">
-                    <div>Katılan Öğrenci: <strong>{s_row['katilan_kullanici']}</strong></div>
-                    <div>Atanan Soru: <strong>{s_row['toplam_soru']}</strong></div>
-                    <div>Verilen Toplam Cevap: <strong>{s_row['toplam_cevap']}</strong></div>
-                    <div>Tamamlanma Oranı: <strong>%{s_row['tamamlanma_orani']}</strong></div>
+                <div style="display: flex; gap: 24px; font-size: 13px; color: #CBD5E1; margin-bottom: 12px;">
+                    <div>Katılan Öğrenci: <strong style="color: #F8FAFC;">{s_row['katilan_kullanici']}</strong></div>
+                    <div>Atanan Soru: <strong style="color: #F8FAFC;">{s_row['toplam_soru']}</strong></div>
+                    <div>Toplam Cevap: <strong style="color: #F8FAFC;">{s_row['toplam_cevap']}</strong></div>
+                    <div>Tamamlanma Oranı: <strong style="color: #38BDF8;">%{s_row['tamamlanma_orani']}</strong></div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             st.progress(float(s_row["tamamlanma_orani"]) / 100.0)
 
         # Devam Eden Oturum Canlı İlerleyişi
-        st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 1.5rem 0 1rem 0;'>", unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Devam Eden Oturumda Anlık Kullanıcı İlerlemesi</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dashboard-card" style="margin-top: 24px;"><div class="card-heading">Devam Eden Oturumda Anlık Kullanıcı İlerlemesi</div>', unsafe_allow_html=True)
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -777,26 +835,32 @@ if selected_view == "Eğitmen / Hoca Paneli":
                 "Öğrenci ID": r[2],
                 "Ad Soyad": r[3],
                 "Oturum Soru Sayısı": r[4],
-                "Yanıtlanan": r[5],
-                "Kalan": r[6],
-                "İlerleme (%)": f"%{r[7]}"
+                "Yanıtlanan Soru": r[5],
+                "Kalan Soru": r[6],
+                "Tamamlanma Oranı": f"%{r[7]}"
             } for r in live_active_rows]
             st.dataframe(live_table, use_container_width=True, hide_index=True)
         else:
-            st.markdown("<div class='alert-box alert-info'>Şu anda 'devam_ediyor' durumunda aktif oturum bulunmamaktadır.</div>", unsafe_allow_html=True)
+            st.markdown("<div class='glow-alert glow-info'>Şu anda 'devam_ediyor' durumunda aktif oturum bulunmamaktadır.</div>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # HOCA PANELİ - 3. SEKME: SORU ANALİTİĞİ
     # -------------------------------------------------------------------------
     with tab_analytics:
-        st.markdown('<div class="card-title">En Çok Zorlanılan ve Yanlış Yapılan Sorular Analizi</div>', unsafe_allow_html=True)
-        st.markdown("<div style='font-size: 13px; color: #64748B; margin-bottom: 12px;'>Öğrencilerin sınavlar genelinde en çok yanlış yanıt verdiği ilk 10 soru listelenmektedir:</div>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="dashboard-card">
+            <div class="card-heading">En Çok Zorlanılan ve Yanlış Yapılan Sorular Analizi</div>
+            <div style="font-size: 13px; color: #94A3B8; margin-bottom: 14px;">
+                Öğrencilerin sınavlar genelinde en çok hata yaptığı ilk 10 soru hata oranına göre sıralanmıştır:
+            </div>
+        """, unsafe_allow_html=True)
 
         hard_questions = get_hardest_questions_data()
         if hard_questions:
             hq_table = [{
                 "Soru ID": r["soru_id"],
-                "Soru Metni": r["soru_metni"][:70] + "...",
+                "Soru Metni": r["soru_metni"][:75] + "...",
                 "Kategori": r["kategori"],
                 "Zorluk": r["zorluk_seviyesi"],
                 "Toplam Yanıt": r["toplam_yanitlanma"],
@@ -805,15 +869,16 @@ if selected_view == "Eğitmen / Hoca Paneli":
                 "Hata Oranı (%)": f"%{r['yanlis_orani']}"
             } for r in hard_questions]
             st.dataframe(hq_table, use_container_width=True, hide_index=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
-    # HOCA PANELİ - 4. SEKME: SORU YÖNETİMİ VE KISITLAR
+    # HOCA PANELİ - 4. SEKME: SORU BANKASI VE YÖNETİM
     # -------------------------------------------------------------------------
     with tab_questions:
-        st.markdown('<div class="card-title">Yeni Quiz Sorusu Ekleme</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dashboard-card"><div class="card-heading">Yeni Quiz Sorusu Ekleme</div>', unsafe_allow_html=True)
 
         with st.form("add_question_form", clear_on_submit=True):
-            new_q_text = st.text_area("Soru Metni", placeholder="Örn: SQL'de verileri silmek için kullanılan komut hangisidir?")
+            new_q_text = st.text_area("Soru Metni", placeholder="Örn: SQL'de verileri güncellemek için hangi komut kullanılır?")
 
             col_a, col_b = st.columns(2)
             with col_a:
@@ -835,19 +900,19 @@ if selected_view == "Eğitmen / Hoca Paneli":
 
             if submitted_new_q:
                 if not new_q_text.strip() or not new_opt_a.strip() or not new_opt_b.strip() or not new_opt_c.strip() or not new_opt_d.strip():
-                    st.markdown("<div class='alert-box alert-error'>Lütfen soru metnini ve tüm seçenekleri (A, B, C, D) eksiksiz doldurunuz.</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='glow-alert glow-error'>Lütfen soru metnini ve tüm seçenekleri (A, B, C, D) eksiksiz doldurunuz.</div>", unsafe_allow_html=True)
                 else:
                     success, msg = insert_new_question(
                         new_q_text, new_opt_a, new_opt_b, new_opt_c, new_opt_d,
                         new_correct, new_category, new_difficulty
                     )
-                    alert_cls = "alert-success" if success else "alert-error"
-                    st.markdown(f"<div class='alert-box {alert_cls}'>{msg}</div>", unsafe_allow_html=True)
+                    alert_cls = "glow-success" if success else "glow-error"
+                    st.markdown(f"<div class='glow-alert {alert_cls}'>{msg}</div>", unsafe_allow_html=True)
 
-        st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 1.5rem 0 1rem 0;'>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Soru Silme ve Yönetim
-        st.markdown('<div class="card-title">Mevcut Sorular ve Silme İşlemi</div>', unsafe_allow_html=True)
+        st.markdown('<div class="dashboard-card"><div class="card-heading">Mevcut Sorular ve Silme İşlemi</div>', unsafe_allow_html=True)
         all_q_list = get_filtered_questions()
 
         if all_q_list:
@@ -862,69 +927,63 @@ if selected_view == "Eğitmen / Hoca Paneli":
                 st.write("")
                 if st.button("Seçili Soruyu Sil", use_container_width=True):
                     del_success, del_msg = delete_question_by_id(del_id)
-                    alert_cls = "alert-success" if del_success else "alert-error"
-                    st.markdown(f"<div class='alert-box {alert_cls}'>{del_msg}</div>", unsafe_allow_html=True)
+                    alert_cls = "glow-success" if del_success else "glow-error"
+                    st.markdown(f"<div class='glow-alert {alert_cls}'>{del_msg}</div>", unsafe_allow_html=True)
                     st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Sistem Bütünlüğü Kısıt Denetimi
         with st.expander("Sistem Durumu ve Veri Bütünlüğü Kısıt Denetimi"):
-            st.markdown("<div style='font-size: 13px; color: #475569; margin-bottom: 12px;'>SQLite PRAGMA foreign_keys, Composite Foreign Key, UNIQUE ve CHECK kısıtlamalarını doğrular.</div>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size: 13px; color: #94A3B8; margin-bottom: 12px;'>SQLite PRAGMA foreign_keys, Composite Foreign Key, UNIQUE ve CHECK kısıtlamalarını doğrular.</div>", unsafe_allow_html=True)
 
             if st.button("Veri Bütünlüğü Testlerini Çalıştır"):
                 test_conn = sqlite3.connect(DB_PATH)
                 test_conn.execute("PRAGMA foreign_keys = ON;")
                 test_results = []
 
-                # 1. Olmayan kullanıcı FK testi
                 try:
                     test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 99999, 1, 1, 1);")
                     test_results.append(("1. Olmayan Kullanıcıya Cevap Engeli (FK)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("1. Olmayan Kullanıcıya Cevap Engeli (FK)", True, "FOREIGN KEY kısıtlaması işlemi engelledi"))
 
-                # 2. Olmayan soru FK testi
                 try:
                     test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 99999, 1);")
                     test_results.append(("2. Olmayan Soruya Cevap Engeli (FK)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("2. Olmayan Soruya Cevap Engeli (FK)", True, "FOREIGN KEY kısıtlaması işlemi engelledi"))
 
-                # 3. Oturumda yer almayan soruya cevap (Bileşik FK)
                 try:
                     test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 90, 1);")
                     test_results.append(("3. Oturumda Bulunmayan Soruya Cevap Engeli (Bileşik FK)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("3. Oturumda Bulunmayan Soruya Cevap Engeli (Bileşik FK)", True, "Bileşik FOREIGN KEY (oturum_id, soru_id) işlemi engelledi"))
 
-                # 4. Soruya ait olmayan seçenek (Bileşik FK: soru_id, secenek_id)
                 try:
                     test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 50, 1, 1, 7);")
                     test_results.append(("4. Başka Soruya Ait Seçeneğe Cevap Verme Engeli (Bileşik FK)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("4. Başka Soruya Ait Seçeneğe Cevap Verme Engeli (Bileşik FK)", True, "Bileşik FOREIGN KEY (soru_id, secenek_id) işlemi engelledi"))
 
-                # 5. Tekrar cevap verme engeli (UNIQUE)
                 try:
                     test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 1, 2);")
                     test_results.append(("5. Aynı Soruya Tekrar Cevap Verme Engeli (UNIQUE)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("5. Aynı Soruya Tekrar Cevap Verme Engeli (UNIQUE)", True, "UNIQUE (kullanici_id, oturum_id, soru_id) işlemi engelledi"))
 
-                # 6. Aynı sorunun oturuma 2 kez eklenmesi (PK)
                 try:
                     test_conn.execute("INSERT INTO oturum_sorulari (oturum_id, soru_id, soru_sirasi) VALUES (1, 1, 99);")
                     test_results.append(("6. Aynı Sorunun Oturuma 2 Kez Eklenmesi Engeli (PK)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("6. Aynı Sorunun Oturuma 2 Kez Eklenmesi Engeli (PK)", True, "PRIMARY KEY (oturum_id, soru_id) işlemi engelledi"))
 
-                # 7. Geçersiz e-posta CHECK testi
                 try:
                     test_conn.execute("INSERT INTO kullanicilar (kullanici_adi, eposta, ad_soyad) VALUES ('denemeuser', 'hatali-eposta', 'Test Ad');")
                     test_results.append(("7. Geçersiz E-Posta Formatı Engeli (CHECK)", False, "Kısıtlama tetiklenmedi"))
                 except sqlite3.IntegrityError:
                     test_results.append(("7. Geçersiz E-Posta Formatı Engeli (CHECK)", True, "CHECK (eposta LIKE '%@%.%') işlemi engelledi"))
 
-                # 8. Negatif süre CHECK testi
                 try:
                     test_conn.execute("INSERT INTO oturumlar (baslik, sure_dakika) VALUES ('Test Oturum', -20);")
                     test_results.append(("8. Negatif Süre Engeli (CHECK)", False, "Kısıtlama tetiklenmedi"))
@@ -936,17 +995,18 @@ if selected_view == "Eğitmen / Hoca Paneli":
 
                 passed_all = all(r[1] for r in test_results)
                 if passed_all:
-                    st.markdown("<div class='alert-box alert-success'>Tüm veri bütünlüğü ve kısıt testleri (8/8) başarıyla doğrulandı. SQLite motoru referansel bütünlüğü korumaktadır.</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='glow-alert glow-success'>Tüm veri bütünlüğü ve kısıt testleri (8/8) başarıyla doğrulandı. SQLite motoru referansel bütünlüğü korumaktadır.</div>", unsafe_allow_html=True)
 
                 for title, passed, detail in test_results:
                     status_label = "[GECTI]" if passed else "[HATA]"
-                    st.markdown(f"<div style='font-size: 13px; padding: 4px 0; color: #1E293B;'><strong>{status_label}</strong> {title} — <span style='color: #64748B;'>{detail}</span></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-size: 13px; padding: 4px 0; color: #CBD5E1;'><strong>{status_label}</strong> {title} — <span style='color: #94A3B8;'>{detail}</span></div>", unsafe_allow_html=True)
 
 
 # =============================================================================
 # ÖĞRENCİ (QUIZ ÇÖZÜMÜ) GÖRÜNÜMÜ
 # =============================================================================
 else:
+    st.markdown('<div class="dashboard-card"><div class="card-heading">Sınav Sorusu Filtreleme ve Başlatma</div>', unsafe_allow_html=True)
     categories = ["Tüm Konular"] + get_categories()
 
     col_filter_cat, col_filter_diff, col_action = st.columns([2, 1, 1])
@@ -963,10 +1023,12 @@ else:
             st.session_state.quiz_user_answer = None
             st.rerun()
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
     df_pool = get_filtered_questions(category_filter=selected_category, difficulty_filter=selected_difficulty)
 
     if not df_pool:
-        st.markdown("<div class='alert-box alert-info'>Belirtilen kriterlere uygun soru bulunamadı. Lütfen filtreleri değiştiriniz.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='glow-alert glow-info'>Belirtilen kriterlere uygun soru bulunamadı. Lütfen filtreleri değiştiriniz.</div>", unsafe_allow_html=True)
     else:
         pool_ids = [r["id"] for r in df_pool]
         if st.session_state.quiz_active_id is None or st.session_state.quiz_active_id not in pool_ids:
@@ -988,16 +1050,15 @@ else:
         q_difficulty = str(selected_row["difficulty"])
 
         st.markdown(f"""
-        <div class="card">
-            <div style="margin-bottom: 10px;">
-                <span class="badge badge-blue">Soru ID: {q_id}</span>
-                <span class="badge badge-gray">{q_category}</span>
-                <span class="badge badge-gray">Zorluk: {q_difficulty}</span>
+        <div class="dashboard-card">
+            <div style="margin-bottom: 12px;">
+                <span class="tag-badge tag-blue">Soru ID: {q_id}</span>
+                <span class="tag-badge tag-gray">{q_category}</span>
+                <span class="tag-badge tag-gray">Zorluk: {q_difficulty}</span>
             </div>
-            <div style="font-size: 16px; font-weight: 600; color: #0F172A; line-height: 1.5;">
+            <div style="font-size: 16.5px; font-weight: 600; color: #F8FAFC; line-height: 1.55; margin-bottom: 16px;">
                 {q_text}
             </div>
-        </div>
         """, unsafe_allow_html=True)
 
         options_dict = {
@@ -1046,22 +1107,22 @@ else:
 
             if user_ans == correct_opt:
                 st.markdown(f"""
-                <div class="alert-box alert-success">
+                <div class="glow-alert glow-success">
                     <strong>Doğru Yanıt</strong><br>
                     Tebrikler. İşaretlediğiniz seçenek ({user_ans}) doğrudur.
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
-                <div class="alert-box alert-error">
+                <div class="glow-alert glow-error">
                     <strong>Yanlış Yanıt</strong><br>
                     Seçtiğiniz seçenek: {user_ans}. Doğru seçenek: <strong>{correct_text}</strong>.
                 </div>
                 """, unsafe_allow_html=True)
 
+        st.markdown('</div>', unsafe_allow_html=True)
+
     # İstatistikler
-    st.write("")
-    st.markdown('<div class="card-title">Test İstatistikleri</div>', unsafe_allow_html=True)
     stats = st.session_state.quiz_stats
     total_ans = stats["total"]
     corr = stats["correct"]
@@ -1070,14 +1131,15 @@ else:
 
     m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
-        st.markdown(f"<div class='metric-container'><div class='metric-label'>Toplam Çözülen</div><div class='metric-val'>{total_ans}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-box'><div class='stat-label'>Toplam Çözülen</div><div class='stat-value'>{total_ans}</div></div>", unsafe_allow_html=True)
     with m2:
-        st.markdown(f"<div class='metric-container'><div class='metric-label'>Doğru Sayısı</div><div class='metric-val' style='color: #166534;'>{corr}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-box'><div class='stat-label'>Doğru Sayısı</div><div class='stat-value' style='color: #34D399;'>{corr}</div></div>", unsafe_allow_html=True)
     with m3:
-        st.markdown(f"<div class='metric-container'><div class='metric-label'>Yanlış Sayısı</div><div class='metric-val' style='color: #991B1B;'>{wrg}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-box'><div class='stat-label'>Yanlış Sayısı</div><div class='stat-value' style='color: #F87171;'>{wrg}</div></div>", unsafe_allow_html=True)
     with m4:
-        st.markdown(f"<div class='metric-container'><div class='metric-label'>Başarı Oranı</div><div class='metric-val'>%{rate:.1f}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-box'><div class='stat-label'>Başarı Oranı</div><div class='stat-value'>%{rate:.1f}</div></div>", unsafe_allow_html=True)
     with m5:
+        st.write("")
         st.write("")
         if st.button("İstatistikleri Sıfırla", use_container_width=True):
             st.session_state.quiz_stats = {"total": 0, "correct": 0, "wrong": 0}
