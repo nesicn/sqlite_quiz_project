@@ -172,21 +172,6 @@ Sistem kurulduktan sonra aşağıdaki sayısal hedefler elde edilmiştir:
 
 ---
 
-## 🎓 Proje Mülakatı ve Sözlü Sınav Hazırlık Rehberi (9 Ekim Cuma)
-
-Hocanızın sözlü sınavda sorabileceği muhtemel sorular ve cevapları:
-
-### S1: Neden SQLite kullandınız ve `PRAGMA foreign_keys = ON;` neden önemlidir?
-> **Cevap:** Proje isterlerinde SQLite kullanılması istenmiştir. SQLite gömülü (file-based) bir veritabanı olduğu için istemci-sunucu mimarisine ihtiyaç duymaz. Ancak SQLite varsayılan olarak yabancı anahtar (FK) kısıtlamalarını denetlemez. Bu nedenle veri bütünlüğünü korumak için her bağlantı kurulduğunda `PRAGMA foreign_keys = ON;` komutunu çalıştırmak şarttır.
-
-### S2: Soruların seçeneklerini neden ayrı bir tabloda tuttunuz?
-> **Cevap:** Soruları ve seçenekleri aynı tabloda tutmak veritabanı normalizasyon kurallarına (1NF/2NF) aykırıdır. `secenekler` tablosunu ayırarak **1-N (One-to-Many)** ilişki kurduk. Bu sayede hem veri tekrarını önledik, hem de ileride 2 seçenekli (Doğru/Yanlış) veya 10 seçenekli sorular eklendiğinde tablo yapısını değiştirmeden esnek bir mimari elde ettik.
-
-### S3: Bir cevabın, sorunun gerçekten o oturumda yer alıp almadığını nasıl kontrol ettiniz?
-> **Cevap:** `cevaplar` tablosundaki `(oturum_id, soru_id)` sütun çiftine **Composite Foreign Key (Bileşik Yabancı Anahtar)** tanımlayarak bu çifti `oturum_sorulari(oturum_id, soru_id)` birincil anahtarına bağladık. Eğer bir soru ilgili oturuma atanmamışsa, SQLite veritabanı seviyesinde `FOREIGN KEY constraint failed` hatası vererek hatalı cevabı engeller.
-
----
-
 ## 📁 Teslim Edilen Dosya Yapısı
 
 - 📄 `schema.sql`: Tüm DDL komutları, tablolar, kısıtlar, indeksler ve görünümler.
