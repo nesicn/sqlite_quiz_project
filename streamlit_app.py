@@ -1352,6 +1352,10 @@ def render_student_join() -> None:
         display_name = st.text_input("Adınız", max_chars=80)
         joined = st.form_submit_button("Sınava Katıl", use_container_width=True)
     if joined:
+        display_name = " ".join(display_name.split())
+        if len(display_name) < 2:
+            st.warning("Lütfen en az 2 karakterden oluşan bir ad girin. Örnek: Öğretmen Denemesi.")
+            return
         try:
             user_id, joined_session_id, session_title = create_guest_participation(
                 display_name, selected_session_id
@@ -1363,7 +1367,7 @@ def render_student_join() -> None:
         except ValueError as exc:
             st.warning(str(exc))
         except sqlite3.Error:
-            st.error("Katılım kaydı oluşturulamadı. Lütfen tekrar deneyin.")
+            st.warning("Katılım kaydedilemedi. Sayfayı yenileyip tekrar deneyin; sorun sürerse öğretmene bildirin.")
 
 
 def student_view() -> None:
