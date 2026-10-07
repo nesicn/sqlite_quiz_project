@@ -802,7 +802,7 @@ def teacher_login() -> bool:
             "ortam değişkeninde QUIZ_TEACHER_PASSWORD tanımlayın."
         )
         st.code(
-            '[secrets.toml]\nQUIZ_TEACHER_PASSWORD = "uzun-ve-tahmin-edilemez-bir-parola"',
+            'QUIZ_TEACHER_PASSWORD = "uzun-ve-tahmin-edilemez-bir-parola"',
             language="toml",
         )
         return False
