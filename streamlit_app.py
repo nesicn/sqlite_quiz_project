@@ -6,7 +6,7 @@ Kullanım:
 
 Hoca panelini açmak için QUIZ_TEACHER_PASSWORD ortam değişkenini veya
 Streamlit secrets içindeki QUIZ_TEACHER_PASSWORD anahtarını ayarlayın.
-Öğrenci erişimi, öğretmenin paylaştığı oturum kodu ve görünen ad ile çalışır.
+Öğrenci, görünen adıyla devam eden sınava katılır; tek aktif sınav varsa otomatik seçilir.
 Bu kimlik yöntemi ders demosu içindir; gerçek öğrenci verisiyle kullanılacaksa
 kurumsal kimlik doğrulama ile değiştirilmelidir.
 """
@@ -425,29 +425,35 @@ def delete_unassigned_question(question_id: int) -> None:
 
 
 def create_guest_participation(
-    join_code: str, display_name: str
+    display_name: str, session_id: int | None = None
 ) -> tuple[int, int, str]:
     clean_name = " ".join(display_name.split())
     if len(clean_name) < 2:
         raise ValueError("Görünen ad en az 2 karakter olmalı.")
-    normalized_code = "".join(join_code.upper().split())
-    if not normalized_code:
-        raise ValueError("Oturum kodunu girin.")
 
     with db_connection() as conn:
-        session = conn.execute(
+        active_sessions = conn.execute(
             """
-            SELECT o.oturum_id, o.baslik, o.durum
-            FROM oturum_erisimleri e
-            JOIN oturumlar o ON o.oturum_id = e.oturum_id
-            WHERE e.katilim_kodu = ?;
+            SELECT oturum_id, baslik
+            FROM oturumlar
+            WHERE durum = 'devam_ediyor'
+            ORDER BY baslangic_zaman DESC, oturum_id DESC;
             """,
-            (normalized_code,),
-        ).fetchone()
-        if not session:
-            raise ValueError("Bu kodla eşleşen bir oturum bulunamadı.")
-        if session["durum"] != "devam_ediyor":
-            raise ValueError("Bu oturum şu anda katılıma açık değil.")
+        ).fetchall()
+        if not active_sessions:
+            raise ValueError("Şu anda açık bir sınav yok. Öğretmen sınavı başlattığında bu sayfa güncellenir.")
+
+        if session_id is None:
+            if len(active_sessions) != 1:
+                raise ValueError("Birden fazla açık sınav var. Katılmak istediğiniz sınavı seçin.")
+            session = active_sessions[0]
+        else:
+            session = next(
+                (row for row in active_sessions if int(row["oturum_id"]) == int(session_id)),
+                None,
+            )
+            if session is None:
+                raise ValueError("Seçilen sınav artık açık değil. Sayfayı yenileyip tekrar deneyin.")
 
         token = secrets.token_hex(6)
         cursor = conn.execute(
@@ -965,6 +971,7 @@ def render_live_monitor() -> None:
 
 def render_session_management() -> None:
     st.markdown("### Oturumlar")
+    st.caption("Sınavı başlattığınızda öğrenci panelinde otomatik görünür; katılım kodu paylaşmanız gerekmez.")
     questions = get_question_bank()
     if not questions:
         st.warning("Önce Soru Bankası sekmesinden soru ekleyin.")
@@ -997,12 +1004,10 @@ def render_session_management() -> None:
         if create_clicked:
             try:
                 question_ids = [question_labels[label] for label in selected_labels]
-                session_id, join_code = create_session(
+                session_id, _join_code = create_session(
                     title, description, int(duration), float(pass_score), question_ids
                 )
                 st.success(f"Oturum {session_id} oluşturuldu ve planlandı.")
-                st.markdown("Öğrenciler sınav başlatıldıktan sonra bu kodla katılabilir:")
-                st.code(join_code)
             except (ValueError, sqlite3.Error, RuntimeError) as exc:
                 st.error(str(exc))
 
@@ -1032,9 +1037,6 @@ def render_session_management() -> None:
                         f"Başlangıç: {session['baslangic_zaman']} · "
                         f"Bitiş: {session['bitis_zaman'] or 'devam ediyor'}"
                     )
-                if session["durum"] in ("planlandi", "devam_ediyor"):
-                    st.caption("Katılım kodu")
-                    st.code(session["katilim_kodu"] or "Kod oluşturulamadı")
             with action:
                 if session["durum"] == "planlandi":
                     if st.button(
@@ -1312,34 +1314,65 @@ def render_student_attempt() -> None:
             st.error(str(exc))
 
 
+def render_student_join() -> None:
+    st.markdown(
+        "<div class='dashboard-card'><div class='card-heading'>"
+        "Aktif sınava katıl</div>"
+        "<div style='color:#94A3B8'>Sınav başladığında açık oturum burada görünür. "
+        "Adınızı yazıp sınava katılın; oturum kodu gerekmez.</div></div>",
+        unsafe_allow_html=True,
+    )
+    try:
+        active_sessions = [
+            row for row in get_sessions() if row["durum"] == "devam_ediyor"
+        ]
+    except sqlite3.Error:
+        st.error("Aktif sınav bilgisi şu anda alınamadı. Biraz sonra tekrar deneyin.")
+        return
+
+    if not active_sessions:
+        st.info("Henüz sınav başlatılmadı. Öğretmen sınavı başlattığında bu ekran otomatik güncellenir.")
+        return
+
+    if len(active_sessions) == 1:
+        selected_session_id = int(active_sessions[0]["oturum_id"])
+        st.info(f"Açık sınav: **{active_sessions[0]['baslik']}**")
+    else:
+        session_by_id = {int(row["oturum_id"]): row for row in active_sessions}
+        selected_session_id = int(
+            st.selectbox(
+                "Katılacağınız sınav",
+                options=list(session_by_id),
+                format_func=lambda value: str(session_by_id[value]["baslik"]),
+                key="student_active_session_choice",
+            )
+        )
+
+    with st.form("join_session_form"):
+        display_name = st.text_input("Adınız", max_chars=80)
+        joined = st.form_submit_button("Sınava Katıl", use_container_width=True)
+    if joined:
+        try:
+            user_id, joined_session_id, session_title = create_guest_participation(
+                display_name, selected_session_id
+            )
+            st.session_state.student_user_id = user_id
+            st.session_state.student_session_id = joined_session_id
+            st.success(f"{session_title} sınavına katıldınız.")
+            st.rerun()
+        except ValueError as exc:
+            st.warning(str(exc))
+        except sqlite3.Error:
+            st.error("Katılım kaydı oluşturulamadı. Lütfen tekrar deneyin.")
+
+
 def student_view() -> None:
     if "student_user_id" not in st.session_state:
-        st.markdown(
-            "<div class='dashboard-card'><div class='card-heading'>"
-            "Aktif sınava katıl</div>"
-            "<div style='color:#94A3B8'>Öğretmeninizin paylaştığı oturum kodunu "
-            "ve sınavda görünecek adınızı girin.</div></div>",
-            unsafe_allow_html=True,
-        )
-        with st.form("join_session_form"):
-            join_code = st.text_input("Oturum kodu", max_chars=12)
-            display_name = st.text_input("Görünen ad", max_chars=80)
-            joined = st.form_submit_button("Sınava Katıl", use_container_width=True)
-        if joined:
-            try:
-                user_id, session_id, session_title = create_guest_participation(
-                    join_code, display_name
-                )
-                st.session_state.student_user_id = user_id
-                st.session_state.student_session_id = session_id
-                st.success(f"{session_title} oturumuna katıldınız.")
-                st.rerun()
-            except (ValueError, sqlite3.Error) as exc:
-                st.error(str(exc))
-        st.caption(
-            "Oturum kodu yalnızca başlatılmış sınavlarda geçerlidir. "
-            "Bu ders demosu oturum bazlı geçici öğrenci kaydı oluşturur."
-        )
+        if hasattr(st, "fragment"):
+            st.fragment(run_every=f"{LIVE_REFRESH_SECONDS}s")(render_student_join)()
+        else:
+            render_student_join()
+            st.caption("Aktif sınavı görmek için sayfayı yenileyin.")
         return
 
     if st.button("Bu oturum ekranından çık", key="leave_student_attempt"):
