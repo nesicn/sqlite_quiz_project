@@ -6,6 +6,19 @@
 🌐 **Canlı Web Arayüzü (Streamlit):** https://db-quiz-project.streamlit.app/
 
 ---
+### 🖥️ Çift Rollü Web Arayüzü Mimarisi (Streamlit)
+
+Arayüz, sistemin hem kullanıcı hem de yönetim katmanını simüle etmek amacıyla **çift rollü (Dual-Role)** olarak tasarlanmıştır. Sağ üstteki **"Kullanıcı Rolü / Görünüm Modu"** seçicisi ile ekranlar arasında geçiş yapılabilir:
+
+1. **Eğitmen / Hoca Paneli (Yönetim & Canlı İzleme):**
+   - **Öğrenci Sınav Sonuçları:** 60 öğrencinin oturum bazlı not çizelgesi, doğru/yanlış/boş sayıları ve filtreleme.
+   - **Öğrenci Sınav Karnesi:** Seçilen herhangi bir öğrencinin sınavdaki tüm sorulara verdiği yanıtları ve puanlarını soru soru gösteren detaylı transkript dökümü.
+   - **Oturum Canlı Takibi:** 5 oturumun ilerleme yüzdeleri ve sürmekte olan oturumdaki öğrencilerin anlık tamamlama oranları.
+   - **Soru Analitiği:** Öğrencilerin en çok yanlış yaptığı ilk 10 soru ve hata oranları analizi.
+   - **Soru Bankası & Bütünlük:** Yeni soru ekleme/silme ve 8 adet veri bütünlüğü kısıt testini tek tıkla çalıştıran denetim aracı.
+
+2. **Öğrenci Modu (Quiz Çözümü):**
+   - Konu ve zorluk filtresine göre soru getirme, şık işaretleme, anlık cevap kontrolü ve oturum skor sayacı.
 
 ## 🚀 Hızlı Kurulum ve Çalıştırma Adımları
 
