@@ -6,19 +6,23 @@
 🌐 **Canlı Web Arayüzü (Streamlit):** https://db-quiz-project.streamlit.app/
 
 ---
-### 🖥️ Çift Rollü Web Arayüzü Mimarisi (Streamlit)
+🖥️ Çift Rollü Web Arayüzü Mimarisi (Streamlit)
+Arayüz, sınav sisteminin öğrenci ve eğitmen iş akışlarını tek uygulamada sunar. “Görünüm” seçicisiyle öğrenci veya hoca paneli seçilir. Hoca paneline erişim, QUIZ_TEACHER_PASSWORD ayarıyla korunur.
 
-Arayüz, sistemin hem kullanıcı hem de yönetim katmanını simüle etmek amacıyla **çift rollü (Dual-Role)** olarak tasarlanmıştır. Sağ üstteki **"Kullanıcı Rolü / Görünüm Modu"** seçicisi ile ekranlar arasında geçiş yapılabilir:
-
-1. **Eğitmen / Hoca Paneli (Yönetim & Canlı İzleme):**
-   - **Öğrenci Sınav Sonuçları:** 60 öğrencinin oturum bazlı not çizelgesi, doğru/yanlış/boş sayıları ve filtreleme.
-   - **Öğrenci Sınav Karnesi:** Seçilen herhangi bir öğrencinin sınavdaki tüm sorulara verdiği yanıtları ve puanlarını soru soru gösteren detaylı transkript dökümü.
-   - **Oturum Canlı Takibi:** 5 oturumun ilerleme yüzdeleri ve sürmekte olan oturumdaki öğrencilerin anlık tamamlama oranları.
-   - **Soru Analitiği:** Öğrencilerin en çok yanlış yaptığı ilk 10 soru ve hata oranları analizi.
-   - **Soru Bankası & Bütünlük:** Yeni soru ekleme/silme ve 8 adet veri bütünlüğü kısıt testini tek tıkla çalıştıran denetim aracı.
-
-2. **Öğrenci Modu (Quiz Çözümü):**
-   - Konu ve zorluk filtresine göre soru getirme, şık işaretleme, anlık cevap kontrolü ve oturum skor sayacı.
+1. Eğitmen / Hoca Paneli (Oturum Yönetimi):
+   - Oturum Oluşturma: Soru sayısı, süre ve puanlama ayarlarıyla yeni sınav oturumu oluşturma.
+   - Oturumu Başlatma ve Kapatma: Hazırlanan oturumu başlatma; sınavı bitirme ve devam eden öğrencilerin oturumlarını kapatma.
+   - Canlı Takip: Oturum koduyla katılan öğrencilerin ilerlemesini ve yanıt durumlarını izleme.
+   - Sonuçları Görüntüleme: Oturum tamamlandığında öğrencilerin puanlarını ve doğru, yanlış, boş yanıt sayılarını inceleme.
+   - Öğrenci Karnesi: Öğrencinin sorulara verdiği yanıtları ve puanlarını soru bazında görüntüleme.
+   - Soru Bankası: Soruları listeleme, yeni soru ekleme ve mevcut soruları yönetme.
+   - Veri Bütünlüğü Denetimi: Veritabanındaki kayıt ve ilişkileri kontrol etme.
+     
+2. Öğrenci Modu (Sınava Katılım):
+   - Öğretmenin paylaştığı oturum kodu ve görünen adla sınava katılma.
+   - Sınav süresince soruları görüntüleme ve yanıtları kaydetme.
+   - Yanıtları gözden geçirme ve sınavı gönderme.
+   - Sınav tamamlandığında puan ve doğru, yanlış, boş yanıt özetini görme.
 
 ## 🚀 Hızlı Kurulum ve Çalıştırma Adımları
 
