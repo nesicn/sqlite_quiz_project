@@ -1,12 +1,11 @@
 """
 Quiz Sistemi Veritabanı Yönetimi ve Kullanıcı Arayüzü
-Kurumsal ve Minimalist Streamlit Uygulaması
+Kurumsal ve Minimalist Streamlit Uygulaması (Hoca ve Öğrenci Modları)
 """
 
 import os
 import random
 import sqlite3
-import pandas as pd
 import streamlit as st
 
 # Sayfa Yapılandırması (Sıfır Emoji)
@@ -20,11 +19,6 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "quiz.db")
 
 # -----------------------------------------------------------------------------
 # ÖZEL KURUMSAL VE MİNİMALİST CSS (MONOKROM PALET)
-# Renk Paleti:
-# - Arka Plan: #F8F9FA
-# - Metin ve Başlıklar: #0F172A ve #1E293B
-# - Vurgu ve Butonlar: #2563EB (Hover: #1D4ED8)
-# - Kenarlıklar: #E2E8F0
 # -----------------------------------------------------------------------------
 CUSTOM_CSS = """
 <style>
@@ -45,22 +39,21 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.01em;
 }
 
-/* Streamlit Varsayılan Başlık Boşluklarını Düzenleme */
 .block-container {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
     padding-bottom: 3rem;
-    max-width: 1100px;
+    max-width: 1160px;
 }
 
 /* Üst Başlık Şeridi */
 .app-header {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
     border-bottom: 1px solid #E2E8F0;
 }
 
 .app-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     color: #0F172A;
     margin: 0;
@@ -76,18 +69,18 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Sekmeler (Tabs) */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 12px;
+    gap: 8px;
     border-bottom: 1px solid #E2E8F0;
     padding-bottom: 2px;
 }
 
 .stTabs [data-baseweb="tab"] {
-    height: 42px;
-    padding: 8px 18px;
+    height: 40px;
+    padding: 6px 16px;
     background-color: transparent;
     color: #64748B;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 13px;
     border: none;
     border-radius: 4px 4px 0 0;
 }
@@ -105,7 +98,7 @@ h1, h2, h3, h4, h5, h6 {
     color: #FFFFFF;
     border: 1px solid #1D4ED8;
     border-radius: 5px;
-    padding: 0.45rem 1.1rem;
+    padding: 0.45rem 1rem;
     font-weight: 500;
     font-size: 13px;
     box-shadow: none;
@@ -122,32 +115,20 @@ h1, h2, h3, h4, h5, h6 {
     background-color: #1E40AF;
 }
 
-/* İkincil Butonlar */
-button[kind="secondary"] {
-    background-color: #FFFFFF !important;
-    color: #334155 !important;
-    border: 1px solid #CBD5E1 !important;
-}
-
-button[kind="secondary"]:hover {
-    background-color: #F1F5F9 !important;
-    color: #0F172A !important;
-}
-
-/* Kurumsal Kart Yapıları */
+/* Kart Yapıları */
 .card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
     border-radius: 6px;
-    padding: 20px;
-    margin-bottom: 16px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
 }
 
 .card-title {
     font-size: 15px;
     font-weight: 600;
     color: #0F172A;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 /* İstatistik Metrik Kutuları */
@@ -224,6 +205,18 @@ button[kind="secondary"]:hover {
     border: 1px solid #E2E8F0;
 }
 
+.badge-green {
+    background-color: #F0FDF4;
+    color: #166534;
+    border: 1px solid #BBF7D0;
+}
+
+.badge-red {
+    background-color: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
 /* Form Elemanları */
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea,
@@ -232,16 +225,6 @@ button[kind="secondary"]:hover {
     border: 1px solid #CBD5E1;
     border-radius: 5px;
     font-size: 13px;
-    color: #1E293B;
-}
-
-/* Radio Seçenekleri Düzenleme */
-.stRadio [role="radiogroup"] {
-    gap: 8px;
-}
-
-.stRadio label {
-    font-size: 14px;
     color: #1E293B;
 }
 
@@ -256,7 +239,7 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
-# VERİ TABANI YÖNETİMİ & TABLO BAŞLATMA
+# VERİ TABANI YÖNETİMİ
 # -----------------------------------------------------------------------------
 def get_db_connection():
     """SQLite veritabanı bağlantısı açar ve FK kısıtlamalarını etkinleştirir."""
@@ -270,7 +253,6 @@ def init_database():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 1. Questions Tablosu Tanımı
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -287,7 +269,6 @@ def init_database():
     """)
     conn.commit()
 
-    # 2. Eğer questions tablosu boşsa ve veritabanında sorular tablosu varsa aktarım yap
     cursor.execute("SELECT COUNT(*) FROM questions;")
     count = cursor.fetchone()[0]
 
@@ -329,19 +310,20 @@ init_database()
 
 
 # -----------------------------------------------------------------------------
-# VERİ TABANI YARDIMCI FONKSİYONLARI
+# VERİ GETİRME FONKSİYONLARI
 # -----------------------------------------------------------------------------
 def get_categories():
-    """Veritabanında kayıtlı benzersiz kategorileri döndürür."""
     conn = get_db_connection()
-    df = pd.read_sql_query("SELECT DISTINCT category FROM questions ORDER BY category;", conn)
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT category FROM questions ORDER BY category;")
+    cats = [r[0] for r in cursor.fetchall() if r[0]]
     conn.close()
-    return list(df["category"].dropna().values)
+    return cats
 
 
 def get_filtered_questions(category_filter=None, difficulty_filter=None, search_query=None):
-    """Filtrelere göre soruları DataFrame formatında çeker."""
     conn = get_db_connection()
+    cursor = conn.cursor()
     query = "SELECT id, question_text, option_a, option_b, option_c, option_d, correct_option, category, difficulty, created_at FROM questions WHERE 1=1"
     params = []
 
@@ -358,13 +340,14 @@ def get_filtered_questions(category_filter=None, difficulty_filter=None, search_
         params.append(f"%{search_query.strip()}%")
 
     query += " ORDER BY id DESC;"
-    df = pd.read_sql_query(query, conn, params=params)
+    cursor.execute(query, params)
+    cols = ["id", "question_text", "option_a", "option_b", "option_c", "option_d", "correct_option", "category", "difficulty", "created_at"]
+    rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
     conn.close()
-    return df
+    return rows
 
 
 def insert_new_question(text, opt_a, opt_b, opt_c, opt_d, correct, category, difficulty):
-    """Yeni soruyu questions tablosuna ekler (ve varsa sorular/secenekler tablosuna da kaydeder)."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -372,8 +355,7 @@ def insert_new_question(text, opt_a, opt_b, opt_c, opt_d, correct, category, dif
             INSERT INTO questions (question_text, option_a, option_b, option_c, option_d, correct_option, category, difficulty)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?);
         """, (text.strip(), opt_a.strip(), opt_b.strip(), opt_c.strip(), opt_d.strip(), correct, category.strip(), difficulty))
-        
-        # Eğer sorular ve secenekler tablosu da mevcutsa veri senkronizasyonu sağla
+
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sorular';")
         if cursor.fetchone():
             cursor.execute("""
@@ -381,7 +363,7 @@ def insert_new_question(text, opt_a, opt_b, opt_c, opt_d, correct, category, dif
                 VALUES (?, ?, ?, 10.0);
             """, (text.strip(), category.strip(), difficulty.lower()))
             new_soru_id = cursor.lastrowid
-            
+
             opts = [
                 ('A', opt_a.strip(), 1 if correct == 'A' else 0),
                 ('B', opt_b.strip(), 1 if correct == 'B' else 0),
@@ -404,7 +386,6 @@ def insert_new_question(text, opt_a, opt_b, opt_c, opt_d, correct, category, dif
 
 
 def delete_question_by_id(question_id):
-    """Soruyu ID değerine göre veritabanından siler."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -416,6 +397,129 @@ def delete_question_by_id(question_id):
         return False, f"Silme işlemi başarısız: {e}"
     finally:
         conn.close()
+
+
+def get_student_results_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT 
+            k.oturum_id,
+            o.baslik AS oturum_basligi,
+            u.kullanici_id,
+            u.ad_soyad,
+            u.eposta,
+            (SELECT COUNT(*) FROM oturum_sorulari os WHERE os.oturum_id = k.oturum_id) AS toplam_soru,
+            COUNT(c.cevap_id) AS cevaplanan_soru,
+            SUM(CASE WHEN sec.dogru_mu = 1 THEN 1 ELSE 0 END) AS dogru_sayisi,
+            SUM(CASE WHEN c.secenek_id IS NOT NULL AND sec.dogru_mu = 0 THEN 1 ELSE 0 END) AS yanlis_sayisi,
+            ((SELECT COUNT(*) FROM oturum_sorulari os WHERE os.oturum_id = k.oturum_id) - COUNT(c.cevap_id)) AS bos_sayisi,
+            COALESCE(ROUND(SUM(
+                CASE 
+                    WHEN c.secenek_id IS NULL THEN 0.0
+                    WHEN sec.dogru_mu = 1 THEN s.puan_degeri
+                    ELSE -2.5
+                END
+            ), 2), 0.0) AS toplam_puan,
+            CASE 
+                WHEN COALESCE(ROUND(SUM(
+                    CASE 
+                        WHEN c.secenek_id IS NULL THEN 0.0
+                        WHEN sec.dogru_mu = 1 THEN s.puan_degeri
+                        ELSE -2.5
+                    END
+                ), 2), 0.0) >= o.gecme_notu THEN 'BASARILI'
+                ELSE 'BASARISIZ'
+            END AS durum_sonucu
+        FROM katilimlar k
+        JOIN oturumlar o ON k.oturum_id = o.oturum_id
+        JOIN kullanicilar u ON k.kullanici_id = u.kullanici_id
+        LEFT JOIN oturum_sorulari os ON k.oturum_id = os.oturum_id
+        LEFT JOIN sorular s ON os.soru_id = s.soru_id
+        LEFT JOIN cevaplar c ON k.katilim_id = c.katilim_id AND os.soru_id = c.soru_id
+        LEFT JOIN secenekler sec ON c.secenek_id = sec.secenek_id
+        GROUP BY k.katilim_id, k.oturum_id, k.kullanici_id
+        ORDER BY k.oturum_id ASC, toplam_puan DESC;
+    """)
+    cols = [
+        "oturum_id", "oturum_basligi", "kullanici_id", "ad_soyad", "eposta",
+        "toplam_soru", "cevaplanan_soru", "dogru_sayisi", "yanlis_sayisi",
+        "bos_sayisi", "toplam_puan", "durum_sonucu"
+    ]
+    rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
+    conn.close()
+    return rows
+
+
+def get_live_sessions_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT 
+            o.oturum_id,
+            o.baslik AS oturum_basligi,
+            o.durum AS oturum_durumu,
+            o.baslangic_zaman,
+            o.bitis_zaman,
+            o.sure_dakika,
+            o.gecme_notu,
+            COUNT(DISTINCT os.soru_id) AS toplam_soru,
+            COUNT(DISTINCT k.katilim_id) AS katilan_kullanici,
+            COUNT(c.cevap_id) AS toplam_cevap,
+            ROUND(
+                CASE 
+                    WHEN (COUNT(DISTINCT k.katilim_id) * COUNT(DISTINCT os.soru_id)) = 0 THEN 0.0
+                    ELSE (CAST(COUNT(c.cevap_id) AS REAL) / (COUNT(DISTINCT k.katilim_id) * COUNT(DISTINCT os.soru_id))) * 100.0
+                END, 1
+            ) AS tamamlanma_orani
+        FROM oturumlar o
+        LEFT JOIN oturum_sorulari os ON o.oturum_id = os.oturum_id
+        LEFT JOIN katilimlar k ON o.oturum_id = k.oturum_id
+        LEFT JOIN cevaplar c ON k.katilim_id = c.katilim_id AND os.soru_id = c.soru_id
+        GROUP BY o.oturum_id
+        ORDER BY o.oturum_id;
+    """)
+    cols = [
+        "oturum_id", "oturum_basligi", "oturum_durumu", "baslangic_zaman",
+        "bitis_zaman", "sure_dakika", "gecme_notu", "toplam_soru",
+        "katilan_kullanici", "toplam_cevap", "tamamlanma_orani"
+    ]
+    rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
+    conn.close()
+    return rows
+
+
+def get_hardest_questions_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT 
+            s.soru_id,
+            s.soru_metni,
+            s.kategori,
+            s.zorluk_seviyesi,
+            COUNT(c.cevap_id) AS toplam_yanitlanma,
+            SUM(CASE WHEN sec.dogru_mu = 1 THEN 1 ELSE 0 END) AS dogru_sayisi,
+            SUM(CASE WHEN sec.dogru_mu = 0 THEN 1 ELSE 0 END) AS yanlis_sayisi,
+            ROUND(
+                (CAST(SUM(CASE WHEN sec.dogru_mu = 0 THEN 1 ELSE 0 END) AS REAL) / COUNT(c.cevap_id)) * 100.0, 
+                1
+            ) AS yanlis_orani
+        FROM sorular s
+        JOIN cevaplar c ON s.soru_id = c.soru_id
+        JOIN secenekler sec ON c.secenek_id = sec.secenek_id
+        GROUP BY s.soru_id
+        HAVING toplam_yanitlanma >= 5
+        ORDER BY yanlis_orani DESC
+        LIMIT 10;
+    """)
+    cols = [
+        "soru_id", "soru_metni", "kategori", "zorluk_seviyesi",
+        "toplam_yanitlanma", "dogru_sayisi", "yanlis_sayisi", "yanlis_orani"
+    ]
+    rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
+    conn.close()
+    return rows
 
 
 # -----------------------------------------------------------------------------
@@ -435,45 +539,421 @@ if "quiz_stats" not in st.session_state:
 
 
 # -----------------------------------------------------------------------------
-# ARAYÜZ ÜST BİLGİ ALANI
+# ÜST BAŞLIK VE GÖRÜNÜM / ROL SEÇİCİSİ
 # -----------------------------------------------------------------------------
-st.markdown("""
-<div class="app-header">
-    <div class="app-title">Quiz Sistemi Veri Tabanı Yönetimi</div>
-    <div class="app-subtitle">İlişkisel Veri Katmanı ve Test Paneli | SQLite3</div>
-</div>
-""", unsafe_allow_html=True)
+col_header_title, col_header_role = st.columns([2.5, 1.5])
 
+with col_header_title:
+    st.markdown("""
+    <div class="app-header">
+        <div class="app-title">Quiz Sistemi Veri Tabanı Yönetimi</div>
+        <div class="app-subtitle">İlişkisel Veri Katmanı, Öğrenci Takibi ve Test Paneli | SQLite3</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# İki Temel Ekran / Sekme
-tab_quiz, tab_admin = st.tabs(["Quiz Arayüzü", "Soru Yönetimi"])
+with col_header_role:
+    selected_view = st.selectbox(
+        "Kullanıcı Rolü / Görünüm Modu",
+        ["Eğitmen / Hoca Paneli", "Öğrenci (Quiz Çözümü)"],
+        index=0,
+        help="Hoca ekranı ile öğrenci sınav çözme ekranı arasında geçiş yapabilirsiniz."
+    )
 
 
 # =============================================================================
-# 1. SEKME: QUIZ ARAYÜZÜ (KULLANICI)
+# EĞİTMEN / HOCA PANELİ
 # =============================================================================
-with tab_quiz:
+if selected_view == "Eğitmen / Hoca Paneli":
+    tab_students, tab_sessions, tab_analytics, tab_questions = st.tabs([
+        "Öğrenci ve Sınav Sonuçları",
+        "Oturum ve Canlı İlerleme",
+        "Soru Analitiği",
+        "Soru Yönetimi ve Kısıtlar"
+    ])
+
+    # -------------------------------------------------------------------------
+    # HOCA PANELİ - 1. SEKME: ÖĞRENCİ VE SINAV SONUÇLARI
+    # -------------------------------------------------------------------------
+    with tab_students:
+        all_results = get_student_results_data()
+
+        # Üst Özet Kartları
+        total_enrollments = len(all_results)
+        passed_count = sum(1 for r in all_results if r["durum_sonucu"] == "BASARILI")
+        failed_count = sum(1 for r in all_results if r["durum_sonucu"] == "BASARISIZ")
+        avg_score = (sum(r["toplam_puan"] for r in all_results) / total_enrollments) if total_enrollments > 0 else 0.0
+
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            st.markdown(f"""
+            <div class="metric-container">
+                <div class="metric-label">Toplam Sınav Katılımı</div>
+                <div class="metric-val">{total_enrollments}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m2:
+            st.markdown(f"""
+            <div class="metric-container">
+                <div class="metric-label">Başarılı (Geçti)</div>
+                <div class="metric-val" style="color: #166534;">{passed_count}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m3:
+            st.markdown(f"""
+            <div class="metric-container">
+                <div class="metric-label">Başarısız (Kaldı)</div>
+                <div class="metric-val" style="color: #991B1B;">{failed_count}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with m4:
+            st.markdown(f"""
+            <div class="metric-container">
+                <div class="metric-label">Ortalama Puan</div>
+                <div class="metric-val">{avg_score:.1f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Filtreleme Alanı
+        col_f_sess, col_f_status, col_f_search = st.columns([1.5, 1, 2])
+        session_titles = ["Tüm Oturumlar"] + sorted(list({r["oturum_basligi"] for r in all_results}))
+
+        with col_f_sess:
+            f_sess = st.selectbox("Oturum Filtresi", session_titles, key="admin_sess_filter")
+        with col_f_status:
+            f_status = st.selectbox("Durum Filtresi", ["Tümü", "BASARILI", "BASARISIZ"], key="admin_stat_filter")
+        with col_f_search:
+            f_search = st.text_input("Öğrenci Ara", placeholder="Öğrenci adı veya e-posta...", key="admin_stud_search")
+
+        # Filtre Uygulama
+        filtered_results = all_results
+        if f_sess != "Tüm Oturumlar":
+            filtered_results = [r for r in filtered_results if r["oturum_basligi"] == f_sess]
+        if f_status != "Tümü":
+            filtered_results = [r for r in filtered_results if r["durum_sonucu"] == f_status]
+        if f_search.strip():
+            filtered_results = [r for r in filtered_results if f_search.strip().lower() in r["ad_soyad"].lower() or f_search.strip().lower() in r["eposta"].lower()]
+
+        st.markdown(f"<div style='font-size: 13px; color: #64748B; margin-bottom: 8px;'>Listelenen Öğrenci Kaydı: <strong>{len(filtered_results)}</strong></div>", unsafe_allow_html=True)
+
+        # Tablo Formatlama
+        table_rows = []
+        for r in filtered_results:
+            table_rows.append({
+                "Öğrenci ID": r["kullanici_id"],
+                "Ad Soyad": r["ad_soyad"],
+                "E-Posta": r["eposta"],
+                "Oturum": r["oturum_basligi"],
+                "Soru": r["toplam_soru"],
+                "Doğru": r["dogru_sayisi"],
+                "Yanlış": r["yanlis_sayisi"],
+                "Boş": r["bos_sayisi"],
+                "Net Puan": r["toplam_puan"],
+                "Durum": r["durum_sonucu"]
+            })
+
+        st.dataframe(table_rows, use_container_width=True, hide_index=True)
+
+        # Öğrenci Detay Karnesi (Transkript İnceleme)
+        st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 1.5rem 0 1rem 0;'>", unsafe_allow_html=True)
+        st.markdown('<div class="card-title">Öğrenci Sınav Karnesi ve Cevap Detayları</div>', unsafe_allow_html=True)
+
+        if filtered_results:
+            student_options = [f"ID {r['kullanici_id']} - {r['ad_soyad']} ({r['oturum_basligi'][:30]}...)" for r in filtered_results]
+            selected_student_label = st.selectbox("İncelemek İstediğiniz Öğrenciyi Seçin:", student_options)
+
+            selected_idx = student_options.index(selected_student_label)
+            target_record = filtered_results[selected_idx]
+
+            # Öğrencinin o oturumdaki soru bazlı cevaplarını çek
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    os.soru_sirasi,
+                    s.soru_id,
+                    s.soru_metni,
+                    sec.secenek_etiketi,
+                    sec.secenek_metni,
+                    COALESCE(sec.dogru_mu, 0) AS dogru_mu,
+                    CASE 
+                        WHEN c.secenek_id IS NULL THEN 0.0
+                        WHEN sec.dogru_mu = 1 THEN s.puan_degeri
+                        ELSE -2.5
+                    END AS alinan_puan,
+                    c.cevaplama_zamani
+                FROM oturum_sorulari os
+                JOIN sorular s ON os.soru_id = s.soru_id
+                LEFT JOIN cevaplar c ON os.oturum_id = c.oturum_id AND os.soru_id = c.soru_id AND c.kullanici_id = ?
+                LEFT JOIN secenekler sec ON c.secenek_id = sec.secenek_id
+                WHERE os.oturum_id = ?
+                ORDER BY os.soru_sirasi;
+            """, (target_record["kullanici_id"], target_record["oturum_id"]))
+
+            answer_rows = cursor.fetchall()
+            conn.close()
+
+            detail_table = []
+            for ar in answer_rows:
+                sira = ar[0]
+                metin = ar[2][:85] + ("..." if len(ar[2]) > 85 else "")
+                cevap = f"{ar[3]}) {ar[4]}" if ar[3] else "BOŞ (Cevaplanmadı)"
+                durum = "[DOGRU]" if ar[5] == 1 else ("[BOS]" if ar[3] is None else "[YANLIS]")
+                puan = ar[6]
+
+                detail_table.append({
+                    "Sıra": sira,
+                    "Soru Metni": metin,
+                    "Verilen Cevap": cevap,
+                    "Durum": durum,
+                    "Alınan Puan": puan
+                })
+
+            st.dataframe(detail_table, use_container_width=True, hide_index=True)
+
+    # -------------------------------------------------------------------------
+    # HOCA PANELİ - 2. SEKME: OTURUM VE CANLI İLERLEME
+    # -------------------------------------------------------------------------
+    with tab_sessions:
+        st.markdown('<div class="card-title">Oturum İlerleme ve Canlı Takip Raporu</div>', unsafe_allow_html=True)
+        sessions_data = get_live_sessions_data()
+
+        for s_row in sessions_data:
+            durum_str = s_row["oturum_durumu"].upper()
+            badge_class = "badge-green" if durum_str == "TAMAMLANDI" else ("badge-blue" if durum_str == "DEVAM_EDIYOR" else "badge-gray")
+
+            st.markdown(f"""
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div>
+                        <span class="badge {badge_class}">Oturum {s_row['oturum_id']} | {durum_str}</span>
+                        <strong style="font-size: 15px; color: #0F172A;">{s_row['oturum_basligi']}</strong>
+                    </div>
+                    <div style="font-size: 12px; color: #64748B;">
+                        Süre: {s_row['sure_dakika']} dk | Baraj: {s_row['gecme_notu']} Puan
+                    </div>
+                </div>
+                <div style="display: flex; gap: 24px; font-size: 13px; color: #475569; margin-bottom: 10px;">
+                    <div>Katılan Öğrenci: <strong>{s_row['katilan_kullanici']}</strong></div>
+                    <div>Atanan Soru: <strong>{s_row['toplam_soru']}</strong></div>
+                    <div>Verilen Toplam Cevap: <strong>{s_row['toplam_cevap']}</strong></div>
+                    <div>Tamamlanma Oranı: <strong>%{s_row['tamamlanma_orani']}</strong></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.progress(float(s_row["tamamlanma_orani"]) / 100.0)
+
+        # Devam Eden Oturum Canlı İlerleyişi
+        st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 1.5rem 0 1rem 0;'>", unsafe_allow_html=True)
+        st.markdown('<div class="card-title">Devam Eden Oturumda Anlık Kullanıcı İlerlemesi</div>', unsafe_allow_html=True)
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                o.oturum_id,
+                o.baslik AS oturum_basligi,
+                u.kullanici_id,
+                u.ad_soyad,
+                (SELECT COUNT(*) FROM oturum_sorulari os WHERE os.oturum_id = o.oturum_id) AS oturum_soru_sayisi,
+                COUNT(c.cevap_id) AS yanitlanan_soru,
+                ((SELECT COUNT(*) FROM oturum_sorulari os WHERE os.oturum_id = o.oturum_id) - COUNT(c.cevap_id)) AS kalan_soru,
+                ROUND(
+                    (CAST(COUNT(c.cevap_id) AS REAL) / (SELECT COUNT(*) FROM oturum_sorulari os WHERE os.oturum_id = o.oturum_id)) * 100.0, 
+                    1
+                ) AS ilerleme_yuzdesi
+            FROM katilimlar kt
+            JOIN oturumlar o ON kt.oturum_id = o.oturum_id
+            JOIN kullanicilar u ON kt.kullanici_id = u.kullanici_id
+            LEFT JOIN cevaplar c ON kt.katilim_id = c.katilim_id
+            WHERE o.durum = 'devam_ediyor'
+            GROUP BY o.oturum_id, u.kullanici_id, u.ad_soyad
+            ORDER BY ilerleme_yuzdesi DESC;
+        """)
+        live_active_rows = cursor.fetchall()
+        conn.close()
+
+        if live_active_rows:
+            live_table = [{
+                "Öğrenci ID": r[2],
+                "Ad Soyad": r[3],
+                "Oturum Soru Sayısı": r[4],
+                "Yanıtlanan": r[5],
+                "Kalan": r[6],
+                "İlerleme (%)": f"%{r[7]}"
+            } for r in live_active_rows]
+            st.dataframe(live_table, use_container_width=True, hide_index=True)
+        else:
+            st.markdown("<div class='alert-box alert-info'>Şu anda 'devam_ediyor' durumunda aktif oturum bulunmamaktadır.</div>", unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # HOCA PANELİ - 3. SEKME: SORU ANALİTİĞİ
+    # -------------------------------------------------------------------------
+    with tab_analytics:
+        st.markdown('<div class="card-title">En Çok Zorlanılan ve Yanlış Yapılan Sorular Analizi</div>', unsafe_allow_html=True)
+        st.markdown("<div style='font-size: 13px; color: #64748B; margin-bottom: 12px;'>Öğrencilerin sınavlar genelinde en çok yanlış yanıt verdiği ilk 10 soru listelenmektedir:</div>", unsafe_allow_html=True)
+
+        hard_questions = get_hardest_questions_data()
+        if hard_questions:
+            hq_table = [{
+                "Soru ID": r["soru_id"],
+                "Soru Metni": r["soru_metni"][:70] + "...",
+                "Kategori": r["kategori"],
+                "Zorluk": r["zorluk_seviyesi"],
+                "Toplam Yanıt": r["toplam_yanitlanma"],
+                "Doğru": r["dogru_sayisi"],
+                "Yanlış": r["yanlis_sayisi"],
+                "Hata Oranı (%)": f"%{r['yanlis_orani']}"
+            } for r in hard_questions]
+            st.dataframe(hq_table, use_container_width=True, hide_index=True)
+
+    # -------------------------------------------------------------------------
+    # HOCA PANELİ - 4. SEKME: SORU YÖNETİMİ VE KISITLAR
+    # -------------------------------------------------------------------------
+    with tab_questions:
+        st.markdown('<div class="card-title">Yeni Quiz Sorusu Ekleme</div>', unsafe_allow_html=True)
+
+        with st.form("add_question_form", clear_on_submit=True):
+            new_q_text = st.text_area("Soru Metni", placeholder="Örn: SQL'de verileri silmek için kullanılan komut hangisidir?")
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                new_opt_a = st.text_input("Seçenek A", placeholder="A şıkkı metni")
+                new_opt_c = st.text_input("Seçenek C", placeholder="C şıkkı metni")
+            with col_b:
+                new_opt_b = st.text_input("Seçenek B", placeholder="B şıkkı metni")
+                new_opt_d = st.text_input("Seçenek D", placeholder="D şıkkı metni")
+
+            col_meta_1, col_meta_2, col_meta_3 = st.columns(3)
+            with col_meta_1:
+                new_correct = st.selectbox("Doğru Seçenek", ["A", "B", "C", "D"])
+            with col_meta_2:
+                new_category = st.text_input("Kategori / Konu", value="SQL Temelleri")
+            with col_meta_3:
+                new_difficulty = st.selectbox("Zorluk Derecesi", ["Kolay", "Orta", "Zor"], index=1)
+
+            submitted_new_q = st.form_submit_button("Soruyu Veritabanına Kaydet")
+
+            if submitted_new_q:
+                if not new_q_text.strip() or not new_opt_a.strip() or not new_opt_b.strip() or not new_opt_c.strip() or not new_opt_d.strip():
+                    st.markdown("<div class='alert-box alert-error'>Lütfen soru metnini ve tüm seçenekleri (A, B, C, D) eksiksiz doldurunuz.</div>", unsafe_allow_html=True)
+                else:
+                    success, msg = insert_new_question(
+                        new_q_text, new_opt_a, new_opt_b, new_opt_c, new_opt_d,
+                        new_correct, new_category, new_difficulty
+                    )
+                    alert_cls = "alert-success" if success else "alert-error"
+                    st.markdown(f"<div class='alert-box {alert_cls}'>{msg}</div>", unsafe_allow_html=True)
+
+        st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 1.5rem 0 1rem 0;'>", unsafe_allow_html=True)
+
+        # Soru Silme ve Yönetim
+        st.markdown('<div class="card-title">Mevcut Sorular ve Silme İşlemi</div>', unsafe_allow_html=True)
+        all_q_list = get_filtered_questions()
+
+        if all_q_list:
+            col_del_select, col_del_btn = st.columns([3, 1])
+            with col_del_select:
+                q_options_list = [f"ID {row['id']}: {row['question_text'][:80]}..." for row in all_q_list]
+                selected_del_label = st.selectbox("Silinecek Soruyu Seçiniz", q_options_list)
+                del_id = int(selected_del_label.split(":")[0].replace("ID ", "").strip())
+
+            with col_del_btn:
+                st.write("")
+                st.write("")
+                if st.button("Seçili Soruyu Sil", use_container_width=True):
+                    del_success, del_msg = delete_question_by_id(del_id)
+                    alert_cls = "alert-success" if del_success else "alert-error"
+                    st.markdown(f"<div class='alert-box {alert_cls}'>{del_msg}</div>", unsafe_allow_html=True)
+                    st.rerun()
+
+        # Sistem Bütünlüğü Kısıt Denetimi
+        with st.expander("Sistem Durumu ve Veri Bütünlüğü Kısıt Denetimi"):
+            st.markdown("<div style='font-size: 13px; color: #475569; margin-bottom: 12px;'>SQLite PRAGMA foreign_keys, Composite Foreign Key, UNIQUE ve CHECK kısıtlamalarını doğrular.</div>", unsafe_allow_html=True)
+
+            if st.button("Veri Bütünlüğü Testlerini Çalıştır"):
+                test_conn = sqlite3.connect(DB_PATH)
+                test_conn.execute("PRAGMA foreign_keys = ON;")
+                test_results = []
+
+                # 1. Olmayan kullanıcı FK testi
+                try:
+                    test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 99999, 1, 1, 1);")
+                    test_results.append(("1. Olmayan Kullanıcıya Cevap Engeli (FK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("1. Olmayan Kullanıcıya Cevap Engeli (FK)", True, "FOREIGN KEY kısıtlaması işlemi engelledi"))
+
+                # 2. Olmayan soru FK testi
+                try:
+                    test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 99999, 1);")
+                    test_results.append(("2. Olmayan Soruya Cevap Engeli (FK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("2. Olmayan Soruya Cevap Engeli (FK)", True, "FOREIGN KEY kısıtlaması işlemi engelledi"))
+
+                # 3. Oturumda yer almayan soruya cevap (Bileşik FK)
+                try:
+                    test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 90, 1);")
+                    test_results.append(("3. Oturumda Bulunmayan Soruya Cevap Engeli (Bileşik FK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("3. Oturumda Bulunmayan Soruya Cevap Engeli (Bileşik FK)", True, "Bileşik FOREIGN KEY (oturum_id, soru_id) işlemi engelledi"))
+
+                # 4. Soruya ait olmayan seçenek (Bileşik FK: soru_id, secenek_id)
+                try:
+                    test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 50, 1, 1, 7);")
+                    test_results.append(("4. Başka Soruya Ait Seçeneğe Cevap Verme Engeli (Bileşik FK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("4. Başka Soruya Ait Seçeneğe Cevap Verme Engeli (Bileşik FK)", True, "Bileşik FOREIGN KEY (soru_id, secenek_id) işlemi engelledi"))
+
+                # 5. Tekrar cevap verme engeli (UNIQUE)
+                try:
+                    test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 1, 2);")
+                    test_results.append(("5. Aynı Soruya Tekrar Cevap Verme Engeli (UNIQUE)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("5. Aynı Soruya Tekrar Cevap Verme Engeli (UNIQUE)", True, "UNIQUE (kullanici_id, oturum_id, soru_id) işlemi engelledi"))
+
+                # 6. Aynı sorunun oturuma 2 kez eklenmesi (PK)
+                try:
+                    test_conn.execute("INSERT INTO oturum_sorulari (oturum_id, soru_id, soru_sirasi) VALUES (1, 1, 99);")
+                    test_results.append(("6. Aynı Sorunun Oturuma 2 Kez Eklenmesi Engeli (PK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("6. Aynı Sorunun Oturuma 2 Kez Eklenmesi Engeli (PK)", True, "PRIMARY KEY (oturum_id, soru_id) işlemi engelledi"))
+
+                # 7. Geçersiz e-posta CHECK testi
+                try:
+                    test_conn.execute("INSERT INTO kullanicilar (kullanici_adi, eposta, ad_soyad) VALUES ('denemeuser', 'hatali-eposta', 'Test Ad');")
+                    test_results.append(("7. Geçersiz E-Posta Formatı Engeli (CHECK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("7. Geçersiz E-Posta Formatı Engeli (CHECK)", True, "CHECK (eposta LIKE '%@%.%') işlemi engelledi"))
+
+                # 8. Negatif süre CHECK testi
+                try:
+                    test_conn.execute("INSERT INTO oturumlar (baslik, sure_dakika) VALUES ('Test Oturum', -20);")
+                    test_results.append(("8. Negatif Süre Engeli (CHECK)", False, "Kısıtlama tetiklenmedi"))
+                except sqlite3.IntegrityError:
+                    test_results.append(("8. Negatif Süre Engeli (CHECK)", True, "CHECK (sure_dakika > 0) işlemi engelledi"))
+
+                test_conn.rollback()
+                test_conn.close()
+
+                passed_all = all(r[1] for r in test_results)
+                if passed_all:
+                    st.markdown("<div class='alert-box alert-success'>Tüm veri bütünlüğü ve kısıt testleri (8/8) başarıyla doğrulandı. SQLite motoru referansel bütünlüğü korumaktadır.</div>", unsafe_allow_html=True)
+
+                for title, passed, detail in test_results:
+                    status_label = "[GECTI]" if passed else "[HATA]"
+                    st.markdown(f"<div style='font-size: 13px; padding: 4px 0; color: #1E293B;'><strong>{status_label}</strong> {title} — <span style='color: #64748B;'>{detail}</span></div>", unsafe_allow_html=True)
+
+
+# =============================================================================
+# ÖĞRENCİ (QUIZ ÇÖZÜMÜ) GÖRÜNÜMÜ
+# =============================================================================
+else:
     categories = ["Tüm Konular"] + get_categories()
 
-    # Üst Filtre ve Ayar Çubuğu
     col_filter_cat, col_filter_diff, col_action = st.columns([2, 1, 1])
-
     with col_filter_cat:
-        selected_category = st.selectbox(
-            "Konu Filtresi",
-            categories,
-            index=0,
-            key="quiz_cat_select"
-        )
-
+        selected_category = st.selectbox("Konu Filtresi", categories, index=0, key="std_cat_select")
     with col_filter_diff:
-        selected_difficulty = st.selectbox(
-            "Zorluk",
-            ["Tüm Zorluklar", "Kolay", "Orta", "Zor"],
-            index=0,
-            key="quiz_diff_select"
-        )
-
+        selected_difficulty = st.selectbox("Zorluk", ["Tüm Zorluklar", "Kolay", "Orta", "Zor"], index=0, key="std_diff_select")
     with col_action:
         st.write("")
         st.write("")
@@ -483,27 +963,19 @@ with tab_quiz:
             st.session_state.quiz_user_answer = None
             st.rerun()
 
-    # İlgili kriterlere uyan soruları sorgula
-    df_pool = get_filtered_questions(
-        category_filter=selected_category,
-        difficulty_filter=selected_difficulty
-    )
+    df_pool = get_filtered_questions(category_filter=selected_category, difficulty_filter=selected_difficulty)
 
-    if df_pool.empty:
-        st.markdown("""
-        <div class="alert-box alert-info">
-            Belirtilen kriterlere uygun soru bulunamadı. Lütfen filtreleri değiştirin veya Soru Yönetimi sekmesinden yeni soru ekleyin.
-        </div>
-        """, unsafe_allow_html=True)
+    if not df_pool:
+        st.markdown("<div class='alert-box alert-info'>Belirtilen kriterlere uygun soru bulunamadı. Lütfen filtreleri değiştiriniz.</div>", unsafe_allow_html=True)
     else:
-        # Aktif soru belirleme
-        if st.session_state.quiz_active_id is None or st.session_state.quiz_active_id not in df_pool["id"].values:
-            selected_row = df_pool.sample(n=1).iloc[0]
+        pool_ids = [r["id"] for r in df_pool]
+        if st.session_state.quiz_active_id is None or st.session_state.quiz_active_id not in pool_ids:
+            selected_row = random.choice(df_pool)
             st.session_state.quiz_active_id = int(selected_row["id"])
             st.session_state.quiz_submitted = False
             st.session_state.quiz_user_answer = None
         else:
-            selected_row = df_pool[df_pool["id"] == st.session_state.quiz_active_id].iloc[0]
+            selected_row = next(r for r in df_pool if r["id"] == st.session_state.quiz_active_id)
 
         q_id = int(selected_row["id"])
         q_text = str(selected_row["question_text"])
@@ -515,7 +987,6 @@ with tab_quiz:
         q_category = str(selected_row["category"])
         q_difficulty = str(selected_row["difficulty"])
 
-        # Soru Kartı
         st.markdown(f"""
         <div class="card">
             <div style="margin-bottom: 10px;">
@@ -529,7 +1000,6 @@ with tab_quiz:
         </div>
         """, unsafe_allow_html=True)
 
-        # Seçenekler
         options_dict = {
             f"A) {opt_a}": "A",
             f"B) {opt_b}": "B",
@@ -545,9 +1015,7 @@ with tab_quiz:
         )
         selected_code = options_dict[user_choice_label]
 
-        # Butonlar
-        col_btn_submit, col_btn_next, col_space = st.columns([1.5, 1.5, 3])
-
+        col_btn_submit, col_btn_next, _ = st.columns([1.5, 1.5, 3])
         with col_btn_submit:
             if st.button("Cevabı Kontrol Et", disabled=st.session_state.quiz_submitted, use_container_width=True):
                 st.session_state.quiz_submitted = True
@@ -567,7 +1035,6 @@ with tab_quiz:
                 st.session_state.quiz_user_answer = None
                 st.rerun()
 
-        # Sonuç Değerlendirme Bildirimi
         if st.session_state.quiz_submitted:
             user_ans = st.session_state.quiz_user_answer
             correct_text = {
@@ -592,273 +1059,26 @@ with tab_quiz:
                 </div>
                 """, unsafe_allow_html=True)
 
-    # Oturum Performans Özeti (Alt Metrik Çubuğu)
+    # İstatistikler
     st.write("")
     st.markdown('<div class="card-title">Test İstatistikleri</div>', unsafe_allow_html=True)
-
     stats = st.session_state.quiz_stats
-    total_answered = stats["total"]
-    correct_count = stats["correct"]
-    wrong_count = stats["wrong"]
-    success_rate = (correct_count / total_answered * 100) if total_answered > 0 else 0.0
+    total_ans = stats["total"]
+    corr = stats["correct"]
+    wrg = stats["wrong"]
+    rate = (corr / total_ans * 100) if total_ans > 0 else 0.0
 
-    m1, m2, m3, m4, m5 = st.columns([1, 1, 1, 1, 1])
-
+    m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
-        st.markdown(f"""
-        <div class="metric-container">
-            <div class="metric-label">Toplam Çözülen</div>
-            <div class="metric-val">{total_answered}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f"<div class='metric-container'><div class='metric-label'>Toplam Çözülen</div><div class='metric-val'>{total_ans}</div></div>", unsafe_allow_html=True)
     with m2:
-        st.markdown(f"""
-        <div class="metric-container">
-            <div class="metric-label">Doğru Sayısı</div>
-            <div class="metric-val" style="color: #166534;">{correct_count}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f"<div class='metric-container'><div class='metric-label'>Doğru Sayısı</div><div class='metric-val' style='color: #166534;'>{corr}</div></div>", unsafe_allow_html=True)
     with m3:
-        st.markdown(f"""
-        <div class="metric-container">
-            <div class="metric-label">Yanlış Sayısı</div>
-            <div class="metric-val" style="color: #991B1B;">{wrong_count}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f"<div class='metric-container'><div class='metric-label'>Yanlış Sayısı</div><div class='metric-val' style='color: #991B1B;'>{wrg}</div></div>", unsafe_allow_html=True)
     with m4:
-        st.markdown(f"""
-        <div class="metric-container">
-            <div class="metric-label">Başarı Oranı</div>
-            <div class="metric-val">%{success_rate:.1f}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f"<div class='metric-container'><div class='metric-label'>Başarı Oranı</div><div class='metric-val'>%{rate:.1f}</div></div>", unsafe_allow_html=True)
     with m5:
         st.write("")
         if st.button("İstatistikleri Sıfırla", use_container_width=True):
             st.session_state.quiz_stats = {"total": 0, "correct": 0, "wrong": 0}
             st.rerun()
-
-
-# =============================================================================
-# 2. SEKME: SORU YÖNETİMİ (ADMIN)
-# =============================================================================
-with tab_admin:
-    st.markdown('<div class="card-title">Yeni Soru Ekleme</div>', unsafe_allow_html=True)
-
-    with st.form("add_question_form", clear_on_submit=True):
-        new_q_text = st.text_area("Soru Metni", placeholder="Örn: SQL'de verileri silmek için kullanılan komut hangisidir?")
-
-        col_a, col_b = st.columns(2)
-        with col_a:
-            new_opt_a = st.text_input("Seçenek A", placeholder="A şıkkı metni")
-            new_opt_c = st.text_input("Seçenek C", placeholder="C şıkkı metni")
-        with col_b:
-            new_opt_b = st.text_input("Seçenek B", placeholder="B şıkkı metni")
-            new_opt_d = st.text_input("Seçenek D", placeholder="D şıkkı metni")
-
-        col_meta_1, col_meta_2, col_meta_3 = st.columns(3)
-        with col_meta_1:
-            new_correct = st.selectbox("Doğru Seçenek", ["A", "B", "C", "D"])
-        with col_meta_2:
-            new_category = st.text_input("Kategori / Konu", value="SQL Temelleri")
-        with col_meta_3:
-            new_difficulty = st.selectbox("Zorluk Derecesi", ["Kolay", "Orta", "Zor"], index=1)
-
-        submitted_new_q = st.form_submit_button("Soruyu Veritabanına Kaydet")
-
-        if submitted_new_q:
-            if not new_q_text.strip() or not new_opt_a.strip() or not new_opt_b.strip() or not new_opt_c.strip() or not new_opt_d.strip():
-                st.markdown("""
-                <div class="alert-box alert-error">
-                    Lütfen soru metnini ve tüm seçenekleri (A, B, C, D) eksiksiz doldurunuz.
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                success, msg = insert_new_question(
-                    new_q_text, new_opt_a, new_opt_b, new_opt_c, new_opt_d,
-                    new_correct, new_category, new_difficulty
-                )
-                if success:
-                    st.markdown(f"""
-                    <div class="alert-box alert-success">
-                        {msg}
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="alert-box alert-error">
-                        {msg}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-    st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 2rem 0 1.5rem 0;'>", unsafe_allow_html=True)
-
-    # Mevcut Soruları Listeleme ve Arama
-    st.markdown('<div class="card-title">Mevcut Sorular ve Yönetim</div>', unsafe_allow_html=True)
-
-    col_search, col_f_cat, col_f_diff = st.columns([2, 1, 1])
-    with col_search:
-        admin_search = st.text_input("Soru Arama", placeholder="Soru metninde geçen anahtar kelime...")
-    with col_f_cat:
-        admin_cat_filter = st.selectbox("Kategoriye Göre Filtrele", ["Tüm Konular"] + get_categories(), key="admin_cat_filt")
-    with col_f_diff:
-        admin_diff_filter = st.selectbox("Zorluğa Göre Filtrele", ["Tüm Zorluklar", "Kolay", "Orta", "Zor"], key="admin_diff_filt")
-
-    df_admin_questions = get_filtered_questions(
-        category_filter=admin_cat_filter,
-        difficulty_filter=admin_diff_filter,
-        search_query=admin_search
-    )
-
-    st.markdown(f"""
-    <div style="font-size: 13px; color: #64748B; margin-bottom: 8px;">
-        Kayıtlı Soru Sayısı: <strong>{len(df_admin_questions)}</strong>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Tablo Gösterimi
-    display_df = df_admin_questions.rename(columns={
-        "id": "ID",
-        "question_text": "Soru Metni",
-        "option_a": "A",
-        "option_b": "B",
-        "option_c": "C",
-        "option_d": "D",
-        "correct_option": "Doğru",
-        "category": "Kategori",
-        "difficulty": "Zorluk",
-        "created_at": "Kayıt Tarihi"
-    })
-
-    st.dataframe(
-        display_df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "ID": st.column_config.NumberColumn(width="small"),
-            "Soru Metni": st.column_config.TextColumn(width="large"),
-            "Doğru": st.column_config.TextColumn(width="small"),
-            "Kategori": st.column_config.TextColumn(width="medium"),
-            "Zorluk": st.column_config.TextColumn(width="small")
-        }
-    )
-
-    # Soru Silme Bölümü
-    if not df_admin_questions.empty:
-        col_del_select, col_del_btn = st.columns([3, 1])
-        with col_del_select:
-            q_options_list = [f"ID {row['id']}: {row['question_text'][:80]}..." for _, row in df_admin_questions.iterrows()]
-            selected_del_label = st.selectbox("Silinecek Soruyu Seçiniz", q_options_list)
-            del_id = int(selected_del_label.split(":")[0].replace("ID ", "").strip())
-
-        with col_del_btn:
-            st.write("")
-            st.write("")
-            if st.button("Seçili Soruyu Sil", use_container_width=True):
-                del_success, del_msg = delete_question_by_id(del_id)
-                if del_success:
-                    st.markdown(f"""
-                    <div class="alert-box alert-success">
-                        {del_msg}
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.rerun()
-                else:
-                    st.markdown(f"""
-                    <div class="alert-box alert-error">
-                        {del_msg}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-    # Sistem ve Veri Bütünlüğü Denetimi (Ödev Desteği & Testler)
-    with st.expander("Sistem Durumu ve Veri Bütünlüğü Kısıt Denetimi"):
-        st.markdown("""
-        <div style="font-size: 13px; color: #475569; margin-bottom: 12px;">
-            SQLite PRAGMA foreign_keys, Composite Foreign Key, UNIQUE ve CHECK kısıtlamalarını doğrular.
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("Veri Bütünlüğü Testlerini Çalıştır"):
-            test_conn = sqlite3.connect(DB_PATH)
-            test_conn.execute("PRAGMA foreign_keys = ON;")
-
-            test_results = []
-
-            # 1. Olmayan kullanıcı FK testi
-            try:
-                test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 99999, 1, 1, 1);")
-                test_results.append(("1. Olmayan Kullanıcıya Cevap Engeli (FK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("1. Olmayan Kullanıcıya Cevap Engeli (FK)", True, "FOREIGN KEY kısıtlaması işlemi reddetti"))
-
-            # 2. Olmayan soru FK testi
-            try:
-                test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 99999, 1);")
-                test_results.append(("2. Olmayan Soruya Cevap Engeli (FK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("2. Olmayan Soruya Cevap Engeli (FK)", True, "FOREIGN KEY kısıtlaması işlemi reddetti"))
-
-            # 3. Oturumda yer almayan soruya cevap (Bileşik FK)
-            try:
-                test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 90, 1);")
-                test_results.append(("3. Oturumda Bulunmayan Soruya Cevap Engeli (Bileşik FK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("3. Oturumda Bulunmayan Soruya Cevap Engeli (Bileşik FK)", True, "Bileşik FOREIGN KEY (oturum_id, soru_id) işlemi reddetti"))
-
-            # 4. Soruya ait olmayan seçenek (Bileşik FK: soru_id, secenek_id)
-            try:
-                test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 50, 1, 1, 7);")
-                test_results.append(("4. Başka Soruya Ait Seçeneğe Cevap Verme Engeli (Bileşik FK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("4. Başka Soruya Ait Seçeneğe Cevap Verme Engeli (Bileşik FK)", True, "Bileşik FOREIGN KEY (soru_id, secenek_id) işlemi reddetti"))
-
-            # 5. Tekrar cevap verme engeli (UNIQUE)
-            try:
-                test_conn.execute("INSERT INTO cevaplar (katilim_id, kullanici_id, oturum_id, soru_id, secenek_id) VALUES (1, 1, 1, 1, 2);")
-                test_results.append(("5. Aynı Soruya Tekrar Cevap Verme Engeli (UNIQUE)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("5. Aynı Soruya Tekrar Cevap Verme Engeli (UNIQUE)", True, "UNIQUE (kullanici_id, oturum_id, soru_id) işlemi reddetti"))
-
-            # 6. Aynı sorunun oturuma 2 kez eklenmesi (PK)
-            try:
-                test_conn.execute("INSERT INTO oturum_sorulari (oturum_id, soru_id, soru_sirasi) VALUES (1, 1, 99);")
-                test_results.append(("6. Aynı Sorunun Oturuma 2 Kez Eklenmesi Engeli (PK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("6. Aynı Sorunun Oturuma 2 Kez Eklenmesi Engeli (PK)", True, "PRIMARY KEY (oturum_id, soru_id) işlemi reddetti"))
-
-            # 7. Geçersiz e-posta CHECK testi
-            try:
-                test_conn.execute("INSERT INTO kullanicilar (kullanici_adi, eposta, ad_soyad) VALUES ('denemeuser', 'hatali-eposta', 'Test Ad');")
-                test_results.append(("7. Geçersiz E-Posta Formatı Engeli (CHECK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("7. Geçersiz E-Posta Formatı Engeli (CHECK)", True, "CHECK (eposta LIKE '%@%.%') işlemi reddetti"))
-
-            # 8. Negatif süre CHECK testi
-            try:
-                test_conn.execute("INSERT INTO oturumlar (baslik, sure_dakika) VALUES ('Test Oturum', -20);")
-                test_results.append(("8. Negatif Süre Engeli (CHECK)", False, "Kısıtlama tetiklenmedi"))
-            except sqlite3.IntegrityError:
-                test_results.append(("8. Negatif Süre Engeli (CHECK)", True, "CHECK (sure_dakika > 0) işlemi reddetti"))
-
-            test_conn.rollback()
-            test_conn.close()
-
-            passed_all = all(r[1] for r in test_results)
-            if passed_all:
-                st.markdown("""
-                <div class="alert-box alert-success">
-                    Tüm veri bütünlüğü ve kısıt testleri (8/8) başarıyla doğrulandı. SQLite motoru referansel bütünlüğü korumaktadır.
-                </div>
-                """, unsafe_allow_html=True)
-
-            for title, passed, detail in test_results:
-                status_label = "[GECTI]" if passed else "[HATA]"
-                st.markdown(f"""
-                <div style="font-size: 13px; padding: 4px 0; color: #1E293B;">
-                    <strong>{status_label}</strong> {title} — <span style="color: #64748B;">{detail}</span>
-                </div>
-                """, unsafe_allow_html=True)
